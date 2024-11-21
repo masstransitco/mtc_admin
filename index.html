@@ -13,7 +13,7 @@
     }
 
     body {
-      font-family: Arial, sans-serif;
+      font-family: Helvetica, Arial, sans-serif;
       background-color: #f4f4f4;
       color: #333;
     }
@@ -32,7 +32,6 @@
     }
 
     header h1 {
-      font-family: Helvetica, Arial, sans-serif;
       font-size: 1.05rem; /* Reduced by 30% */
       text-align: left;
       margin-left: 0;
@@ -148,7 +147,9 @@
     <h2>Vehicle Details</h2>
     <div class="model-container">
       <!-- Embed Sketchfab 3D Model -->
-      <iframe src="https://sketchfab.com/models/2c530666fa834f71b75f526f1bb1eb40/embed"></iframe>
+      <div class="sketchfab-embed-wrapper">
+        <iframe title="mtc" frameborder="0" allowfullscreen mozallowfullscreen="true" webkitallowfullscreen="true" allow="autoplay; fullscreen; xr-spatial-tracking" xr-spatial-tracking execution-while-out-of-viewport execution-while-not-rendered web-share width="640" height="480" src="https://sketchfab.com/models/2c530666fa834f71b75f526f1bb1eb40/embed?autostart=1&camera=0&ui_animations=0&ui_infos=0&ui_stop=0&ui_inspector=0&ui_watermark_link=0&ui_watermark=0&ui_ar=0&ui_help=0&ui_settings=0&ui_vr=0&ui_fullscreen=0&ui_annotations=0"></iframe>
+      </div>
     </div>
     <ul id="vehicleDetails">
       <li>Select a vehicle to see details here...</li>
@@ -169,11 +170,17 @@
     let markers = {};
     let selectedVehicle = null;
 
-    // Initialize Google Map
+    // Initialize Google Map with Uber-style map
     function initMap() {
+      const uberMapStyle = [
+        // Uber map style JSON goes here
+        // You can obtain the style from Snazzy Maps or other style repositories
+      ];
+
       map = new google.maps.Map(document.getElementById("map"), {
         center: { lat: 22.3193, lng: 114.1694 }, // Default center (Hong Kong)
         zoom: 12,
+        styles: uberMapStyle,
       });
     }
 
@@ -191,10 +198,57 @@
         if (!response.ok) throw new Error(`Error: ${response.status}`);
         const data = await response.json();
 
-        populateDropdown(data.data);
-        plotVehiclesOnMap(data.data);
+        // Fetch real-time location and door status for each vehicle
+        const vehiclesWithDetails = await Promise.all(data.data.map(async (vehicle) => {
+          const location = await fetchVehicleLocation(vehicle.registration);
+          const doorStatus = await fetchDoorStatus(vehicle.registration);
+          return { ...vehicle, location, doorStatus };
+        }));
+
+        populateDropdown(vehiclesWithDetails);
+        plotVehiclesOnMap(vehiclesWithDetails);
       } catch (error) {
         console.error("Failed to fetch vehicles:", error);
+      }
+    }
+
+    // Fetch vehicle location
+    async function fetchVehicleLocation(registration) {
+      try {
+        const response = await fetch(`${baseUrl}/vehicles/${registration}/location`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Basic ${auth}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) throw new Error(`Error: ${response.status}`);
+        const data = await response.json();
+        return data.data.location;
+      } catch (error) {
+        console.error(`Failed to fetch location for vehicle ${registration}:`, error);
+        return null;
+      }
+    }
+
+    // Fetch door status
+    async function fetchDoorStatus(registration) {
+      try {
+        const response = await fetch(`${baseUrl}/vehicles/${registration}/doorstatus`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Basic ${auth}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) throw new Error(`Error: ${response.status}`);
+        const data = await response.json();
+        return data.data.doorStatus; // Assuming API returns { data: { doorStatus: 'Locked' } }
+      } catch (error) {
+        console.error(`Failed to fetch door status for vehicle ${registration}:`, error);
+        return 'Unknown';
       }
     }
 
@@ -268,7 +322,7 @@
       detailsList.innerHTML = `
         <li><strong>Registration:</strong> ${vehicle.registration}</li>
         <li><strong>Model:</strong> ${vehicle.model}</li>
-        <li><strong>Status:</strong> ${vehicle.status}</li>
+        <li><strong>Door Status:</strong> ${vehicle.doorStatus}</li>
         <li><strong>Last Known Location:</strong> ${vehicle.location 
           ? `Lat: ${vehicle.location.latitude}, Lng: ${vehicle.location.longitude}` 
           : 'Unavailable'}
@@ -282,7 +336,7 @@
     // Send Lock/Unlock Command
     async function sendCommand(vehicle, command) {
       try {
-        const response = await fetch(`${baseUrl}/vehicles/commands/${vehicle.registration}`, {
+        const response = await fetch(`${baseUrl}/vehicles/${vehicle.registration}/commands`, {
           method: 'POST',
           headers: {
             'Authorization': `Basic ${auth}`,
@@ -293,6 +347,10 @@
 
         if (!response.ok) throw new Error(`Error: ${response.status}`);
         alert(`Command '${command}' sent to vehicle ${vehicle.registration}.`);
+
+        // Update door status after command
+        vehicle.doorStatus = command === 'LOCK' ? 'Locked' : 'Unlocked';
+        displayVehicleDetails(vehicle);
       } catch (error) {
         console.error(`Failed to send '${command}' command:`, error);
         alert(`Failed to send '${command}' command.`);
