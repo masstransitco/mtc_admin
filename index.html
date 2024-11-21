@@ -14,21 +14,32 @@
 
     body {
       font-family: Helvetica, Arial, sans-serif;
-      background-color: #f4f4f4;
-      color: #333;
+      background-color: #121212; /* Dark background to complement dark map */
+      color: #fff;
     }
 
     header {
       display: flex;
-      justify-content: flex-end;
       align-items: center;
-      padding: 10px 20px;
-      background-color: #000;
-      color: #fff;
+      justify-content: center; /* Center the dropdown */
+      padding: 2px 20px; /* 2px padding on top and bottom */
+      background-color: #1e1e1e; /* Slightly lighter dark for header */
+      position: relative;
+      height: 60px; /* Adjust height to accommodate dropdown */
+    }
+
+    header img {
+      height: 40px;
+      margin-right: 10px;
+      position: absolute;
+      left: 20px;
     }
 
     header h1 {
-      font-size: 1.05rem; /* Reduced by 30% */
+      font-size: 0.735rem; /* 1.05rem reduced by 30% */
+      text-align: right;
+      position: absolute;
+      right: 20px;
     }
 
     #map {
@@ -38,9 +49,8 @@
 
     .details-section {
       padding: 20px;
-      background-color: #fff;
+      background-color: #1e1e1e;
       overflow-y: auto;
-      position: relative;
     }
 
     .details-section h2 {
@@ -55,10 +65,10 @@
 
     .details-section li {
       padding: 10px;
-      background: #f9f9f9;
+      background: #2c2c2c;
       margin-bottom: 5px;
       border-radius: 5px;
-      border: 1px solid #ddd;
+      border: 1px solid #444;
     }
 
     .details-section .button-group {
@@ -103,39 +113,22 @@
       height: 100%;
       border: none;
     }
-
-    /* Position the dropdown over the 3D model */
-    .dropdown-over-model {
-      position: absolute;
-      top: 20px;
-      left: 20px;
-      z-index: 1000;
-    }
-
-    .dropdown-over-model select {
-      padding: 10px;
-      font-size: 1rem;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      width: 300px;
-    }
   </style>
   <!-- Replace 'YOUR_GOOGLE_MAPS_API_KEY' with your actual Google Maps API key -->
   <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA8rDrxBzMRlgbA7BQ2DoY31gEXzZ4Ours"></script>
 </head>
 <body>
   <header>
+    <img src="logo.png" alt="Logo">
+    <div class="dropdown-container">
+      <select id="vehicleSelector">
+        <option value="">-- Loading Vehicles --</option>
+      </select>
+    </div>
     <h1>Fleet Ops</h1>
   </header>
 
   <div id="map"></div>
-
-  <!-- Dropdown over the 3D model -->
-  <div class="dropdown-over-model">
-    <select id="vehicleSelector">
-      <option value="">-- Loading Vehicles --</option>
-    </select>
-  </div>
 
   <div class="details-section">
     <h2>Vehicle Details</h2>
@@ -155,6 +148,7 @@
   </div>
 
   <script>
+    // Configuration
     const username = 'URBA00001';
     const token = 'fd58cd26fefc8c2b2ba1f7f52b33221a65f645790a43ff9b8da35db7da6e1f33';
     const auth = btoa(`${username}:${token}`);
@@ -167,24 +161,84 @@
     // Initialize Google Map with dark theme and remove controls
     function initMap() {
       const darkMapStyle = [
-        // Dark theme style JSON
+        { "elementType": "geometry", "stylers": [{ "color": "#242f3e" }] },
+        { "elementType": "labels.text.stroke", "stylers": [{ "color": "#242f3e" }] },
+        { "elementType": "labels.text.fill", "stylers": [{ "color": "#746855" }] },
         {
-          "elementType": "geometry",
-          "stylers": [{ "color": "#212121" }]
-        },
-        {
-          "elementType": "labels.icon",
-          "stylers": [{ "visibility": "off" }]
-        },
-        {
+          "featureType": "administrative.locality",
           "elementType": "labels.text.fill",
-          "stylers": [{ "color": "#757575" }]
+          "stylers": [{ "color": "#d59563" }]
         },
         {
-          "elementType": "labels.text.stroke",
-          "stylers": [{ "color": "#212121" }]
+          "featureType": "poi",
+          "elementType": "labels.text.fill",
+          "stylers": [{ "color": "#d59563" }]
         },
-        // ... Additional style rules
+        {
+          "featureType": "poi.park",
+          "elementType": "geometry",
+          "stylers": [{ "color": "#263c3f" }]
+        },
+        {
+          "featureType": "poi.park",
+          "elementType": "labels.text.fill",
+          "stylers": [{ "color": "#6b9a76" }]
+        },
+        {
+          "featureType": "road",
+          "elementType": "geometry",
+          "stylers": [{ "color": "#38414e" }]
+        },
+        {
+          "featureType": "road",
+          "elementType": "geometry.stroke",
+          "stylers": [{ "color": "#212a37" }]
+        },
+        {
+          "featureType": "road",
+          "elementType": "labels.text.fill",
+          "stylers": [{ "color": "#9ca5b3" }]
+        },
+        {
+          "featureType": "road.highway",
+          "elementType": "geometry",
+          "stylers": [{ "color": "#746855" }]
+        },
+        {
+          "featureType": "road.highway",
+          "elementType": "geometry.stroke",
+          "stylers": [{ "color": "#1f2835" }]
+        },
+        {
+          "featureType": "road.highway",
+          "elementType": "labels.text.fill",
+          "stylers": [{ "color": "#f3d19c" }]
+        },
+        {
+          "featureType": "transit",
+          "elementType": "geometry",
+          "stylers": [{ "color": "#2f3948" }]
+        },
+        {
+          "featureType": "transit.station",
+          "elementType": "labels.text.fill",
+          "stylers": [{ "color": "#d59563" }]
+        },
+        {
+          "featureType": "water",
+          "elementType": "geometry",
+          "stylers": [{ "color": "#17263c" }]
+        },
+        {
+          "featureType": "water",
+          "elementType": "labels.text.fill",
+          "stylers": [{ "color": "#515c6d" }]
+        },
+        {
+          "featureType": "water",
+          "elementType": "labels.text.stroke",
+          "stylers": [{ "color": "#17263c" }]
+        }
       ];
 
       map = new google.maps.Map(document.getElementById("map"), {
@@ -210,10 +264,14 @@
         if (!response.ok) throw new Error(`Error: ${response.status}`);
         const data = await response.json();
 
-        // Use the correct identifier (e.g., vehicle ID)
+        if (!data.data || !Array.isArray(data.data)) {
+          throw new Error("Invalid data format received from API.");
+        }
+
+        // Use the correct identifier (registration)
         const vehiclesWithDetails = await Promise.all(data.data.map(async (vehicle) => {
-          const location = await fetchVehicleLocation(vehicle.id); // Using vehicle.id
-          const doorStatus = await fetchDoorStatus(vehicle.id);
+          const location = await fetchVehicleLocation(vehicle.registration); // Using registration
+          const doorStatus = await fetchDoorStatus(vehicle.registration);
           return { ...vehicle, location, doorStatus };
         }));
 
@@ -225,9 +283,9 @@
     }
 
     // Fetch vehicle location
-    async function fetchVehicleLocation(vehicleId) {
+    async function fetchVehicleLocation(registration) {
       try {
-        const response = await fetch(`${baseUrl}/vehicles/${vehicleId}/location`, {
+        const response = await fetch(`${baseUrl}/vehicles/${encodeURIComponent(registration)}/location`, {
           method: 'GET',
           headers: {
             'Authorization': `Basic ${auth}`,
@@ -237,17 +295,17 @@
 
         if (!response.ok) throw new Error(`Error: ${response.status}`);
         const data = await response.json();
-        return data.data; // Adjusted based on API response
+        return data.data.location; // Assuming API returns { data: { location: { latitude, longitude } } }
       } catch (error) {
-        console.error(`Failed to fetch location for vehicle ${vehicleId}:`, error);
+        console.error(`Failed to fetch location for vehicle ${registration}:`, error);
         return null;
       }
     }
 
     // Fetch door status
-    async function fetchDoorStatus(vehicleId) {
+    async function fetchDoorStatus(registration) {
       try {
-        const response = await fetch(`${baseUrl}/vehicles/${vehicleId}/doorstatus`, {
+        const response = await fetch(`${baseUrl}/vehicles/${encodeURIComponent(registration)}/doorstatus`, {
           method: 'GET',
           headers: {
             'Authorization': `Basic ${auth}`,
@@ -257,9 +315,9 @@
 
         if (!response.ok) throw new Error(`Error: ${response.status}`);
         const data = await response.json();
-        return data.data.doorStatus; // Adjusted based on API response
+        return data.data.doorStatus; // Assuming API returns { data: { doorStatus: 'Locked' } }
       } catch (error) {
-        console.error(`Failed to fetch door status for vehicle ${vehicleId}:`, error);
+        console.error(`Failed to fetch door status for vehicle ${registration}:`, error);
         return 'Unknown';
       }
     }
@@ -270,15 +328,15 @@
       selector.innerHTML = `<option value="">-- Select a Vehicle --</option>`;
       vehicles.forEach(vehicle => {
         const option = document.createElement('option');
-        option.value = vehicle.id; // Using vehicle.id
+        option.value = vehicle.registration; // Using registration
         option.textContent = `${vehicle.registration} (${vehicle.model})`;
         selector.appendChild(option);
       });
 
       selector.addEventListener('change', () => {
-        const selectedVehicleId = selector.value;
-        if (selectedVehicleId) {
-          selectedVehicle = vehicles.find(v => v.id == selectedVehicleId);
+        const selectedRegistration = selector.value;
+        if (selectedRegistration) {
+          selectedVehicle = vehicles.find(v => v.registration === selectedRegistration);
           displayVehicleDetails(selectedVehicle);
           updateMapMarkers(selectedVehicle);
         } else {
@@ -286,8 +344,8 @@
           document.getElementById('lockButton').disabled = true;
           document.getElementById('unlockButton').disabled = true;
           // Show all markers
-          for (let id in markers) {
-            markers[id].setVisible(true);
+          for (let reg in markers) {
+            markers[reg].setVisible(true);
           }
           map.setZoom(12);
           map.setCenter({ lat: 22.3193, lng: 114.1694 });
@@ -298,32 +356,34 @@
     // Plot Vehicles on Map
     function plotVehiclesOnMap(vehicles) {
       // Clear existing markers
-      for (let id in markers) {
-        markers[id].setMap(null);
+      for (let reg in markers) {
+        markers[reg].setMap(null);
       }
       markers = {};
 
       vehicles.forEach(vehicle => {
-        if (vehicle.location) {
+        if (vehicle.location && typeof vehicle.location.latitude === 'number' && typeof vehicle.location.longitude === 'number') {
           const marker = new google.maps.Marker({
             position: { lat: vehicle.location.latitude, lng: vehicle.location.longitude },
             map,
             title: vehicle.registration,
           });
-          markers[vehicle.id] = marker;
+          markers[vehicle.registration] = marker;
+        } else {
+          console.warn(`Invalid location data for vehicle ${vehicle.registration}.`);
         }
       });
     }
 
     // Update Map Markers based on selection
     function updateMapMarkers(selectedVehicle) {
-      for (let id in markers) {
-        if (id == selectedVehicle.id) {
-          markers[id].setVisible(true);
-          map.setCenter(markers[id].getPosition());
+      for (let reg in markers) {
+        if (reg === selectedVehicle.registration) {
+          markers[reg].setVisible(true);
+          map.setCenter(markers[reg].getPosition());
           map.setZoom(18); // Street level zoom
         } else {
-          markers[id].setVisible(false);
+          markers[reg].setVisible(false);
         }
       }
     }
@@ -336,7 +396,7 @@
         <li><strong>Model:</strong> ${vehicle.model}</li>
         <li><strong>Door Status:</strong> ${vehicle.doorStatus}</li>
         <li><strong>Last Known Location:</strong> ${vehicle.location 
-          ? \`Lat: \${vehicle.location.latitude}, Lng: \${vehicle.location.longitude}\` 
+          ? `Lat: ${vehicle.location.latitude}, Lng: ${vehicle.location.longitude}` 
           : 'Unavailable'}
         </li>
       `;
@@ -348,7 +408,7 @@
     // Send Lock/Unlock Command
     async function sendCommand(vehicle, command) {
       try {
-        const response = await fetch(`${baseUrl}/vehicles/${vehicle.id}/commands`, {
+        const response = await fetch(`${baseUrl}/vehicles/${encodeURIComponent(vehicle.registration)}/commands`, {
           method: 'POST',
           headers: {
             'Authorization': `Basic ${auth}`,
@@ -360,8 +420,9 @@
         if (!response.ok) throw new Error(`Error: ${response.status}`);
         alert(`Command '${command}' sent to vehicle ${vehicle.registration}.`);
 
-        // Update door status after command
-        vehicle.doorStatus = command === 'LOCK' ? 'Locked' : 'Unlocked';
+        // Optionally, refetch door status after command
+        const updatedDoorStatus = await fetchDoorStatus(vehicle.registration);
+        vehicle.doorStatus = updatedDoorStatus;
         displayVehicleDetails(vehicle);
       } catch (error) {
         console.error(`Failed to send '${command}' command:`, error);
