@@ -52,22 +52,27 @@
     }
 
     .center-btn {
-      position: absolute;
-      left: 100px; /* Adjust as needed between logo and dropdown */
       background-color: #276EF1; /* Uber blue */
       border: none;
       border-radius: 50%;
-      width: 40px;
-      height: 40px;
+      width: 26px; /* 65% of 40px */
+      height: 26px; /* 65% of 40px */
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3); /* Soft shadow with blur */
+      transition: box-shadow 0.3s ease;
+      margin-right: 10px; /* Space between locate button and dropdown */
+    }
+
+    .center-btn:hover {
+      box-shadow: 0 6px 8px rgba(0, 0, 0, 0.4); /* Enhanced shadow on hover */
     }
 
     .center-btn img {
-      width: 20px;
-      height: 20px;
+      width: 16px; /* Adjusted icon size */
+      height: 16px;
     }
 
     .map-container {
@@ -146,6 +151,7 @@
       color: #fff;
       text-shadow: 0 0 10px #276EF1; /* Illuminating effect */
       line-height: 1;
+      display: block; /* Ensure it occupies its own line */
     }
 
     .route-info .unit {
@@ -278,15 +284,19 @@
       }
     }
   </style>
-  <!-- Replace 'YOUR_GOOGLE_MAPS_API_KEY' with your actual Google Maps API key -->
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA8rDrxBzMRlgbA7BQ2DoY31gEXzZ4Ours&language=zh-HK"></script>
+  <!-- Load Google Maps API with async, defer, and callback -->
+  <script
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA8rDrxBzMRlgbA7BQ2DoY31gEXzZ4Ours&language=zh-HK&callback=initMap"
+    async
+    defer
+  ></script>
 </head>
 <body>
   <header>
     <img src="logo.png" alt="Logo">
-    <button id="centerMapBtn" class="center-btn">
+    <button id="centerMapBtn" class="center-btn" title="Center on Me">
       <!-- Locate Icon (using SVG for better scalability) -->
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="#fff" viewBox="0 0 24 24">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#fff" viewBox="0 0 24 24">
         <path d="M12 8a4 4 0 100 8 4 4 0 000-8zm-1 10.93V20h2v-1.07a7.007 7.007 0 014.933-6.93A7.007 7.007 0 0112 18.93zM5.05 5.05a7 7 0 0110.9 0l1.41-1.41a9 9 0 10-12.72 0l1.41 1.41z"/>
       </svg>
     </button>
@@ -369,6 +379,7 @@
         }
       });
 
+      // Custom Map Style (Maintained from previous setup)
       const customMapStyle = [
         {
           "featureType": "all",
@@ -669,6 +680,7 @@
         showSketchfab();
         plotRoute();
         illuminateMarker(selectedVehicle.registration);
+        document.getElementById('routeToggle').style.display = 'block';
       }
     }
 
@@ -813,10 +825,7 @@
               if (status === 'OK') {
                 if (results[0]) {
                   const startAddress = results[0].formatted_address;
-                  document.querySelector('.route-info').innerHTML = `
-                    <span class="time">${document.getElementById('walkingTime').textContent}</span>
-                    <span class="unit">${document.getElementById('walkingTime').nextElementSibling.textContent}</span>
-                  `;
+                  // Update starting address in routeInfo if needed
                 }
               }
             });
@@ -849,6 +858,7 @@
     }
 
     // Center Map on User's Location
+    // Button is now in the header
     document.getElementById('centerMapBtn').addEventListener('click', () => {
       if (userLocation) {
         map.setCenter(userLocation);
@@ -934,7 +944,7 @@
 
     // Initialize map and fetch data on page load
     window.onload = () => {
-      initMap();
+      // initMap is now called via the callback parameter in the script tag
       fetchVehicles();
     };
   </script>
