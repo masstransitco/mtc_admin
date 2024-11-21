@@ -51,8 +51,28 @@
       box-shadow: 0 0 5px #276EF1; /* Uber blue focus */
     }
 
+    .center-btn {
+      position: absolute;
+      left: 100px; /* Adjust as needed between logo and dropdown */
+      background-color: #276EF1; /* Uber blue */
+      border: none;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .center-btn img {
+      width: 20px;
+      height: 20px;
+    }
+
     .map-container {
-      padding: 20px; /* Padding between map and screen */
+      padding: 20px 5px; /* 5px padding left and right */
+      position: relative;
     }
 
     #map {
@@ -62,9 +82,9 @@
     }
 
     .iframe-container, .alternative-container {
-      width: 100%;
+      width: calc(100% - 10px); /* Full width with 5px padding on both sides */
       max-width: 1280px;
-      height: 720px;
+      height: 216px; /* Reduced to 30% of 720px */
       margin: 20px auto;
       display: none; /* Hidden by default */
       border-radius: 10px;
@@ -114,7 +134,7 @@
     }
 
     .route-info {
-      display: flex;
+      display: none; /* Hidden by default */
       align-items: center;
       gap: 10px;
       margin-bottom: 10px;
@@ -125,12 +145,22 @@
       font-weight: bold;
       color: #fff;
       text-shadow: 0 0 10px #276EF1; /* Illuminating effect */
+      line-height: 1;
     }
 
     .route-info .unit {
       font-size: 1rem;
       color: #fff;
       text-shadow: 0 0 10px #276EF1; /* Illuminating effect */
+      line-height: 1;
+    }
+
+    .route-details-toggle {
+      color: #fff;
+      text-decoration: underline;
+      cursor: pointer;
+      font-size: 0.9rem;
+      align-self: flex-end;
     }
 
     .button-group {
@@ -181,20 +211,15 @@
       width: 100%;
     }
 
-    .route-btn {
-      background-color: #C7C7CC; /* Light gray Uber color */
-      color: #000;
-      padding: 8px 16px;
-      font-size: 0.9rem;
-      border: none;
+    .route-details {
+      display: none; /* Hidden by default */
+      margin-top: 10px;
+      background: #2c2c2c;
+      padding: 10px;
       border-radius: 5px;
-      cursor: pointer;
-      margin-bottom: 10px;
-      width: 100%;
-    }
-
-    .route-btn:hover, .choose-destination-btn:hover, .pay-as-you-go-btn:hover, .lock-btn:hover, .unlock-btn:hover {
-      opacity: 0.8;
+      max-height: 200px;
+      overflow-y: auto;
+      font-size: 0.9rem;
     }
 
     /* Show elements when active */
@@ -214,6 +239,9 @@
       border-radius: 5px;
       border: 1px solid #444;
       font-size: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
     }
 
     .last-location .address {
@@ -244,6 +272,10 @@
       .last-location {
         font-size: 0.9rem;
       }
+
+      .center-btn {
+        left: 60px; /* Adjust for smaller screens */
+      }
     }
   </style>
   <!-- Replace 'YOUR_GOOGLE_MAPS_API_KEY' with your actual Google Maps API key -->
@@ -252,6 +284,12 @@
 <body>
   <header>
     <img src="logo.png" alt="Logo">
+    <button id="centerMapBtn" class="center-btn">
+      <!-- Locate Icon (using SVG for better scalability) -->
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="#fff" viewBox="0 0 24 24">
+        <path d="M12 8a4 4 0 100 8 4 4 0 000-8zm-1 10.93V20h2v-1.07a7.007 7.007 0 014.933-6.93A7.007 7.007 0 0112 18.93zM5.05 5.05a7 7 0 0110.9 0l1.41-1.41a9 9 0 10-12.72 0l1.41 1.41z"/>
+      </svg>
+    </button>
     <div class="dropdown-container">
       <select id="vehicleSelector">
         <option value="">-- Loading Vehicles --</option>
@@ -261,15 +299,15 @@
 
   <div class="map-container">
     <div id="map"></div>
-    <button id="centerMapBtn" style="position: absolute; top: 80px; right: 40px; padding: 10px 15px; background-color: #276EF1; color: #fff; border: none; border-radius: 5px; cursor: pointer; z-index: 5;">Center on Me</button>
+    <!-- Center on Me Button moved to header -->
+  </div>
+
+  <div class="iframe-container active" id="alternativeContainer">
+    <iframe src="https://poly.cam/capture/7F309A54-AAEF-459D-8A2F-198E70A58D40/embed" title="GSViewer"></iframe>
   </div>
 
   <div class="iframe-container" id="sketchfabContainer">
     <iframe src="https://sketchfab.com/models/2c530666fa834f71b75f526f1bb1eb40/embed?autostart=1&camera=0&ui_animations=0&ui_infos=0&ui_stop=0&ui_inspector=0&ui_watermark_link=0&ui_watermark=0&ui_ar=0&ui_help=0&ui_settings=0&ui_vr=0&ui_fullscreen=0&ui_annotations=0" title="3D Model"></iframe>
-  </div>
-
-  <div class="alternative-container" id="alternativeContainer">
-    <iframe src="https://poly.cam/capture/7F309A54-AAEF-459D-8A2F-198E70A58D40/embed" title="GSViewer"></iframe>
   </div>
 
   <div class="details-section">
@@ -278,10 +316,12 @@
         <ul id="vehicleDetails">
           <li>Select a vehicle to see details here...</li>
         </ul>
-        <button id="routeBtn" class="route-btn" disabled>Route</button>
         <div class="route-info" id="routeInfo">
           <span class="time" id="walkingTime">0</span>
           <span class="unit">mins</span>
+        </div>
+        <div class="route-details-toggle" id="routeToggle" style="display: none;">
+          <span id="toggleText">Route details</span>
         </div>
         <div class="button-group">
           <button id="lockButton" class="lock-btn" disabled>Lock</button>
@@ -295,6 +335,9 @@
     </div>
     <div class="last-location" id="lastLocation">
       <!-- Address will be populated here -->
+    </div>
+    <div class="route-details" id="routeDetails">
+      <!-- Turn-by-turn directions will be populated here -->
     </div>
   </div>
 
@@ -401,7 +444,7 @@
       });
 
       directionsRenderer.setMap(map);
-      directionsRenderer.setPanel(document.getElementById('routeInfo'));
+      directionsRenderer.setPanel(document.getElementById('routeDetails'));
 
       // Add user's current location as a blue dot
       if (navigator.geolocation) {
@@ -624,7 +667,8 @@
         }
         displayVehicleDetails(selectedVehicle);
         showSketchfab();
-        plotSelectedRoute();
+        plotRoute();
+        illuminateMarker(selectedVehicle.registration);
       }
     }
 
@@ -638,15 +682,46 @@
       document.getElementById('unlockButton').disabled = true;
       document.getElementById('chooseDestinationButton').disabled = true;
       document.getElementById('payAsYouGoButton').disabled = true;
-      document.getElementById('routeBtn').disabled = true;
+      // Hide Route Info and Details
       document.getElementById('routeInfo').classList.remove('active');
       document.getElementById('routeInfo').style.display = 'none';
+      document.getElementById('routeToggle').style.display = 'none';
+      document.getElementById('routeDetails').style.display = 'none';
+      // Show alternative iframe
+      document.getElementById('alternativeContainer').classList.add('active');
+      // Remove illumination from all markers
+      removeMarkerIllumination();
+    }
+
+    // Illuminate Selected Marker
+    function illuminateMarker(registration) {
+      removeMarkerIllumination(); // Remove previous illumination
+      const marker = markers[registration];
+      if (marker) {
+        marker.setIcon({
+          url: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png"
+        });
+      }
+    }
+
+    // Remove illumination from all markers
+    function removeMarkerIllumination() {
+      for (let reg in markers) {
+        markers[reg].setIcon({
+          url: "http://maps.google.com/mapfiles/ms/icons/red-dot.png"
+        });
+      }
     }
 
     // Display Vehicle Details
     function displayVehicleDetails(vehicle) {
       const detailsList = document.getElementById('vehicleDetails');
       detailsList.innerHTML = `
+        <li><strong>Last Known Location:</strong></li>
+        <li class="address">
+          <span class="english">Fetching address...</span>
+          <span class="chinese">獲取地址中...</span>
+        </li>
         <li><strong>Registration:</strong> ${vehicle.registration}</li>
         <li><strong>Model:</strong> ${vehicle.model}</li>
       `;
@@ -658,37 +733,25 @@
             if (results[0]) {
               const address = results[0].formatted_address;
               const chineseAddress = results[0].address_components.find(comp => comp.types.includes('administrative_area_level_1'))?.long_name || 'N/A';
-              document.getElementById('lastLocation').innerHTML = `
-                <div class="address">
-                  <span class="english">${address}</span>
-                  <span class="chinese">${chineseAddress}</span>
-                </div>
-              `;
+              const addressElements = detailsList.querySelectorAll('.address span');
+              addressElements[0].textContent = address;
+              addressElements[1].textContent = chineseAddress;
             } else {
-              document.getElementById('lastLocation').innerHTML = `
-                <div class="address">
-                  <span class="english">No address found</span>
-                  <span class="chinese">無地址找到</span>
-                </div>
-              `;
+              const addressElements = detailsList.querySelectorAll('.address span');
+              addressElements[0].textContent = 'No address found';
+              addressElements[1].textContent = '無地址找到';
             }
           } else {
             console.error('Geocoder failed due to: ' + status);
-            document.getElementById('lastLocation').innerHTML = `
-              <div class="address">
-                <span class="english">${vehicle.location.lat}, ${vehicle.location.lng}</span>
-                <span class="chinese">無地址找到</span>
-              </div>
-            `;
+            const addressElements = detailsList.querySelectorAll('.address span');
+            addressElements[0].textContent = `${vehicle.location.lat}, ${vehicle.location.lng}`;
+            addressElements[1].textContent = '無地址找到';
           }
         });
       } else {
-        document.getElementById('lastLocation').innerHTML = `
-          <div class="address">
-            <span class="english">Unavailable</span>
-            <span class="chinese">不可用</span>
-          </div>
-        `;
+        const addressElements = detailsList.querySelectorAll('.address span');
+        addressElements[0].textContent = 'Unavailable';
+        addressElements[1].textContent = '不可用';
       }
 
       // Enable buttons
@@ -696,7 +759,6 @@
       document.getElementById('unlockButton').disabled = false;
       document.getElementById('chooseDestinationButton').disabled = false;
       document.getElementById('payAsYouGoButton').disabled = false;
-      document.getElementById('routeBtn').disabled = false;
     }
 
     // Clear Vehicle Details
@@ -706,7 +768,7 @@
       document.getElementById('lastLocation').innerHTML = '';
     }
 
-    // Show Sketchfab iframe
+    // Show Sketchfab iframe and hide alternative
     function showSketchfab() {
       document.getElementById('sketchfabContainer').classList.add('active');
       document.getElementById('alternativeContainer').classList.remove('active');
@@ -719,7 +781,7 @@
     }
 
     // Plot Route from user to selected vehicle
-    async function plotSelectedRoute() {
+    async function plotRoute() {
       if (userLocation && selectedVehicle && selectedVehicle.location) {
         const request = {
           origin: userLocation,
@@ -739,18 +801,37 @@
                 const timeValue = timeParts[0];
                 const timeUnit = timeParts[1];
                 document.getElementById('walkingTime').textContent = timeValue;
-                document.getElementById('walkingTime').style.fontSize = '2rem';
-                document.getElementById('walkingTime').style.textShadow = '0 0 10px #276EF1';
-                document.getElementById('walkingTime').style.color = '#fff';
                 document.getElementById('walkingTime').nextElementSibling.textContent = timeUnit;
                 document.getElementById('routeInfo').classList.add('active');
                 document.getElementById('routeInfo').style.display = 'flex';
+                document.getElementById('routeToggle').style.display = 'block';
               }
             }
+
+            // Display starting and destination addresses
+            geocoder.geocode({ location: userLocation }, (results, status) => {
+              if (status === 'OK') {
+                if (results[0]) {
+                  const startAddress = results[0].formatted_address;
+                  document.querySelector('.route-info').innerHTML = `
+                    <span class="time">${document.getElementById('walkingTime').textContent}</span>
+                    <span class="unit">${document.getElementById('walkingTime').nextElementSibling.textContent}</span>
+                  `;
+                }
+              }
+            });
+
+            // Display destination address is already handled in vehicle details
           } else {
             console.error('Directions request failed due to ' + status);
           }
         });
+
+        // Adjust map to fit the route
+        const bounds = new google.maps.LatLngBounds();
+        bounds.extend(userLocation);
+        bounds.extend(selectedVehicle.location);
+        map.fitBounds(bounds);
       } else {
         console.warn('User location or selected vehicle location is unavailable.');
       }
@@ -763,6 +844,8 @@
       document.getElementById('walkingTime').nextElementSibling.textContent = 'mins';
       document.getElementById('routeInfo').classList.remove('active');
       document.getElementById('routeInfo').style.display = 'none';
+      document.getElementById('routeToggle').style.display = 'none';
+      document.getElementById('routeDetails').style.display = 'none';
     }
 
     // Center Map on User's Location
@@ -775,12 +858,42 @@
       }
     });
 
-    // Route Button Functionality
-    document.getElementById('routeBtn').addEventListener('click', () => {
-      if (selectedVehicle && selectedVehicle.location) {
-        plotSelectedRoute();
+    // Toggle Route Details
+    document.getElementById('routeToggle').addEventListener('click', () => {
+      const routeDetails = document.getElementById('routeDetails');
+      const toggleText = document.getElementById('toggleText');
+      if (routeDetails.style.display === 'none' || routeDetails.style.display === '') {
+        // Show route details
+        routeDetails.style.display = 'block';
+        toggleText.textContent = 'Close route details';
       } else {
-        alert('Selected vehicle location is unavailable.');
+        // Hide route details
+        routeDetails.style.display = 'none';
+        toggleText.textContent = 'Route details';
+      }
+    });
+
+    // Populate Route Details
+    function populateRouteDetails(route) {
+      const routeDetailsDiv = document.getElementById('routeDetails');
+      routeDetailsDiv.innerHTML = ''; // Clear previous details
+
+      const steps = route.legs[0].steps;
+      steps.forEach((step, index) => {
+        const stepDiv = document.createElement('div');
+        stepDiv.style.marginBottom = '10px';
+        stepDiv.innerHTML = `
+          <strong>Step ${index + 1}:</strong> ${step.instructions}
+        `;
+        routeDetailsDiv.appendChild(stepDiv);
+      });
+    }
+
+    // Event Listener for Route Toggle to Populate Details
+    directionsRenderer.addListener('directions_changed', () => {
+      const directions = directionsRenderer.getDirections();
+      if (directions) {
+        populateRouteDetails(directions.routes[0]);
       }
     });
 
