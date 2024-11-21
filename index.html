@@ -260,31 +260,36 @@
     // Fetch vehicle details (location, status, etc.)
     async function fetchVehicleDetails(vehicle) {
       try {
-        // Fetch vehicle status
-        const statusResponse = await fetch(`${baseUrl}/vehicles/status`, {
-          method: 'GET',
+        // Fetch vehicle location using the new script
+        const response = await fetch(`${baseUrl}/vehicles/${encodeURIComponent(vehicle.registration)}/share-location-link`, {
+          method: 'POST',
           headers: {
             'Authorization': `Basic ${auth}`,
             'Content-Type': 'application/json',
           },
+          body: JSON.stringify({
+            // You can adjust the expiration timestamp as needed
+            "expiration_ts": "2099-12-31 23:59:59"
+          }),
         });
 
-        if (!statusResponse.ok) throw new Error(`Error: ${statusResponse.status}`);
-        const statusData = await statusResponse.json();
+        if (!response.ok) throw new Error(`Error: ${response.status}`);
+        const data = await response.json();
 
-        if (statusData && Array.isArray(statusData.data)) {
-          const vehicleStatus = statusData.data.find(v => v.registration === vehicle.registration);
-          if (vehicleStatus) {
-            vehicle.location = {
-              latitude: vehicleStatus.latitude,
-              longitude: vehicleStatus.longitude,
-            };
-            vehicle.doorStatus = vehicleStatus.doorStatus;
-            vehicle.batteryLevel = vehicleStatus.batteryLevel;
-            vehicle.systemStatus = vehicleStatus.systemStatus;
-            vehicle.lastActiveTime = vehicleStatus.lastActiveTime;
-          }
+        if (data && data.data && data.data.location) {
+          vehicle.location = {
+            latitude: data.data.location.latitude,
+            longitude: data.data.location.longitude,
+          };
+          // Assign other details if available
+        } else {
+          console.warn(`No location data received for vehicle ${vehicle.registration}.`);
         }
+
+        // Optionally, fetch other vehicle statuses if available
+        // For example, door status, battery level, system status, last active time
+        // Assuming there are endpoints or data available, you can implement similar fetch calls here
+
       } catch (error) {
         console.error(`Failed to fetch details for vehicle ${vehicle.registration}:`, error);
       }
@@ -298,45 +303,47 @@
       }
       markers = {};
 
-      // Fetch status for all vehicles
-      try {
-        const statusResponse = await fetch(`${baseUrl}/vehicles/status`, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Basic ${auth}`,
-            'Content-Type': 'application/json',
-          },
-        });
-
-        if (!statusResponse.ok) throw new Error(`Error: ${statusResponse.status}`);
-        const statusData = await statusResponse.json();
-
-        if (statusData && Array.isArray(statusData.data)) {
-          vehicles.forEach(vehicle => {
-            const vehicleStatus = statusData.data.find(v => v.registration === vehicle.registration);
-            if (vehicleStatus) {
-              vehicle.location = {
-                latitude: vehicleStatus.latitude,
-                longitude: vehicleStatus.longitude,
-              };
-              // Other vehicle details can be assigned here
-            }
-
-            if (vehicle.location && typeof vehicle.location.latitude === 'number' && typeof vehicle.location.longitude === 'number') {
-              const marker = new google.maps.Marker({
-                position: { lat: vehicle.location.latitude, lng: vehicle.location.longitude },
-                map,
-                title: vehicle.registration,
-              });
-              markers[vehicle.registration] = marker;
-            } else {
-              console.warn(`Invalid location data for vehicle ${vehicle.registration}.`);
-            }
+      // Fetch location for all vehicles
+      await Promise.all(vehicles.map(async (vehicle) => {
+        try {
+          const response = await fetch(`${baseUrl}/vehicles/${encodeURIComponent(vehicle.registration)}/share-location-link`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Basic ${auth}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              // You can adjust the expiration timestamp as needed
+              "expiration_ts": "2099-12-31 23:59:59"
+            }),
           });
+
+          if (!response.ok) throw new Error(`Error: ${response.status}`);
+          const data = await response.json();
+
+          if (data && data.data && data.data.location) {
+            vehicle.location = {
+              latitude: data.data.location.latitude,
+              longitude: data.data.location.longitude,
+            };
+          } else {
+            console.warn(`No location data received for vehicle ${vehicle.registration}.`);
+          }
+
+          if (vehicle.location && typeof vehicle.location.latitude === 'number' && typeof vehicle.location.longitude === 'number') {
+            const marker = new google.maps.Marker({
+              position: { lat: vehicle.location.latitude, lng: vehicle.location.longitude },
+              map,
+              title: vehicle.registration,
+            });
+            markers[vehicle.registration] = marker;
+          } else {
+            console.warn(`Invalid location data for vehicle ${vehicle.registration}.`);
+          }
+        } catch (error) {
+          console.error(`Failed to fetch location for vehicle ${vehicle.registration}:`, error);
         }
-      } catch (error) {
-        console.error("Failed to fetch vehicle statuses:", error);
-      }
+      }));
     }
 
     // Update Map Markers based on selection
@@ -359,10 +366,7 @@
         <li><strong>ID:</strong> ${vehicle.id}</li>
         <li><strong>Registration:</strong> ${vehicle.registration}</li>
         <li><strong>Model:</strong> ${vehicle.model}</li>
-        <li><strong>Door Status:</strong> ${vehicle.doorStatus || 'Unavailable'}</li>
-        <li><strong>Battery Level:</strong> ${vehicle.batteryLevel || 'Unavailable'}</li>
-        <li><strong>System Status:</strong> ${vehicle.systemStatus || 'Unavailable'}</li>
-        <li><strong>Last Active Time:</strong> ${vehicle.lastActiveTime || 'Unavailable'}</li>
+        <!-- You can add more details here if available -->
         <li><strong>Last Known Location:</strong> ${vehicle.location 
           ? `Lat: ${vehicle.location.latitude}, Lng: ${vehicle.location.longitude}` 
           : 'Unavailable'}
@@ -402,7 +406,7 @@
         if (!response.ok) throw new Error(`Error: ${response.status}`);
         alert(`Command '${command}' sent to vehicle ${vehicle.registration}.`);
 
-        // Optionally, refetch door status after command
+        // Optionally, refetch vehicle details after command
         await fetchVehicleDetails(vehicle);
         displayVehicleDetails(vehicle);
       } catch (error) {
