@@ -153,7 +153,8 @@
     <div class="button-group">
       <button id="lockButton" class="lock-btn" disabled>Lock</button>
       <button id="unlockButton" class="unlock-btn" disabled>Unlock</button>
-      <button id="hornButton" class="horn-btn" disabled>Horn</button>
+      <!-- If you have a horn function, you can include it -->
+      <!-- <button id="hornButton" class="horn-btn" disabled>Horn</button> -->
     </div>
   </div>
 
@@ -196,30 +197,84 @@
       });
     }
 
-    // Fetch vehicles from Cartrack API
-    async function fetchVehicles() {
+    // API Functions (extracted from your provided code)
+
+    // Create request options
+    function createRequestOptions(method, contentType = null, body = null) {
+      let myHeaders = new Headers();
+      myHeaders.append("Authorization", `Basic ${auth}`);
+      if (contentType) {
+        myHeaders.append("Content-Type", contentType);
+      }
+      let requestOptions = {
+        method: method,
+        headers: myHeaders,
+        redirect: "follow",
+      };
+      if (body) {
+        requestOptions.body = JSON.stringify(body);
+      }
+      return requestOptions;
+    }
+
+    // Get the list of vehicles
+    async function getCars() {
       try {
-        const response = await fetch(`${baseUrl}/vehicles`, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Basic ${auth}`,
-            'Content-Type': 'application/json',
-          },
-        });
+        let url = `${baseUrl}/vehicles?limit=10000`;
+        const requestOptions = createRequestOptions("GET", 'application/json');
+        let response = await fetch(url, requestOptions);
+        response = await response.json();
+        return response;
+      } catch (error) {
+        console.error("Error fetching vehicles:", error);
+        return null;
+      }
+    }
 
-        if (!response.ok) throw new Error(`Error: ${response.status}`);
-        const data = await response.json();
-
-        if (!data || !Array.isArray(data.data)) {
-          throw new Error("Invalid data format received from API.");
+    // Get the status of a specific car
+    async function getCarStatus(registration) {
+      try {
+        let url = `${baseUrl}/vehicles/status?filter[registration]=${encodeURIComponent(registration)}`;
+        const requestOptions = createRequestOptions("GET");
+        let response = await fetch(url, requestOptions);
+        response = await response.json();
+        if (response?.data?.length) {
+          return response.data[0];
+        } else {
+          console.warn(`No status data found for vehicle ${registration}.`);
+          return null;
         }
+      } catch (error) {
+        console.error(`Error fetching status for vehicle ${registration}:`, error);
+        return null;
+      }
+    }
 
+    // Command car (lock/unlock)
+    async function commandCar(registration, commandType) {
+      try {
+        let url = `${baseUrl}/vehicles/${encodeURIComponent(registration)}/central-locking`;
+        const requestOptions = createRequestOptions("PUT", 'application/json', { command: commandType });
+        let response = await fetch(url, requestOptions);
+        response = await response.json();
+        alert(`Command '${commandType}' sent to vehicle ${registration}.`);
+        return response;
+      } catch (error) {
+        console.error(`Error sending command to vehicle ${registration}:`, error);
+        alert(`Failed to send '${commandType}' command.`);
+        return null;
+      }
+    }
+
+    // Fetch vehicles and populate dropdown
+    async function fetchVehicles() {
+      const data = await getCars();
+      if (data && Array.isArray(data.data)) {
         vehicles = data.data;
-
         populateDropdown(vehicles);
         await plotVehiclesOnMap(vehicles);
-      } catch (error) {
-        console.error("Failed to fetch vehicles:", error);
+      } else {
+        console.error("Invalid vehicle data received.");
       }
     }
 
@@ -238,14 +293,23 @@
         const selectedRegistration = selector.value;
         if (selectedRegistration) {
           selectedVehicle = vehicles.find(v => v.registration === selectedRegistration);
-          await fetchVehicleDetails(selectedVehicle);
+          const status = await getCarStatus(selectedVehicle.registration);
+          if (status) {
+            selectedVehicle.location = {
+              latitude: status.location.latitude,
+              longitude: status.location.longitude,
+            };
+            selectedVehicle.doorStatus = status.door_status;
+            selectedVehicle.batteryLevel = status.battery_level;
+            selectedVehicle.systemStatus = status.system_status;
+            selectedVehicle.lastActiveTime = status.last_active_time;
+          }
           displayVehicleDetails(selectedVehicle);
           updateMapMarkers(selectedVehicle);
         } else {
           selectedVehicle = null;
           document.getElementById('lockButton').disabled = true;
           document.getElementById('unlockButton').disabled = true;
-          document.getElementById('hornButton').disabled = true;
           // Show all markers
           for (let reg in markers) {
             markers[reg].setVisible(true);
@@ -256,51 +320,6 @@
       });
     }
 
-    // Fetch vehicle details (location, status, etc.)
-    async function fetchVehicleDetails(vehicle) {
-      try {
-        // Fetch vehicle location using the share-location-link endpoint
-        const response = await fetch(`${baseUrl}/vehicles/${encodeURIComponent(vehicle.registration)}/share-location-link`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Basic ${auth}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            // Set expiration timestamp to a future date
-            "expiration_ts": "2099-12-31 23:59:59"
-          }),
-        });
-
-        if (!response.ok) throw new Error(`Error: ${response.status}`);
-        const data = await response.json();
-
-        if (data && data.data && data.data.location_url) {
-          const locationUrl = data.data.location_url;
-          // Fetch the location data from the location URL
-          const locationResponse = await fetch(locationUrl);
-          if (!locationResponse.ok) throw new Error(`Error fetching location data: ${locationResponse.status}`);
-          const locationData = await locationResponse.json();
-
-          if (locationData && locationData.latitude && locationData.longitude) {
-            vehicle.location = {
-              latitude: parseFloat(locationData.latitude),
-              longitude: parseFloat(locationData.longitude),
-            };
-          } else {
-            console.warn(`No location data found for vehicle ${vehicle.registration}.`);
-          }
-        } else {
-          console.warn(`No location URL received for vehicle ${vehicle.registration}.`);
-        }
-
-        // Optionally, fetch other vehicle statuses if available
-
-      } catch (error) {
-        console.error(`Failed to fetch details for vehicle ${vehicle.registration}:`, error);
-      }
-    }
-
     // Plot Vehicles on Map
     async function plotVehiclesOnMap(vehicles) {
       // Clear existing markers
@@ -309,57 +328,48 @@
       }
       markers = {};
 
-      // Fetch location for all vehicles
-      await Promise.all(vehicles.map(async (vehicle) => {
-        try {
-          const response = await fetch(`${baseUrl}/vehicles/${encodeURIComponent(vehicle.registration)}/share-location-link`, {
-            method: 'POST',
-            headers: {
-              'Authorization': `Basic ${auth}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              // Set expiration timestamp to a future date
-              "expiration_ts": "2099-12-31 23:59:59"
-            }),
-          });
+      // Fetch status for all vehicles
+      const statusResponse = await getCarsStatus(vehicles.map(v => v.registration));
+      if (statusResponse && Array.isArray(statusResponse)) {
+        vehicles.forEach(vehicle => {
+          const status = statusResponse.find(s => s.registration === vehicle.registration);
+          if (status && status.location) {
+            vehicle.location = {
+              latitude: status.location.latitude,
+              longitude: status.location.longitude,
+            };
 
-          if (!response.ok) throw new Error(`Error: ${response.status}`);
-          const data = await response.json();
-
-          if (data && data.data && data.data.location_url) {
-            const locationUrl = data.data.location_url;
-            // Fetch the location data from the location URL
-            const locationResponse = await fetch(locationUrl);
-            if (!locationResponse.ok) throw new Error(`Error fetching location data: ${locationResponse.status}`);
-            const locationData = await locationResponse.json();
-
-            if (locationData && locationData.latitude && locationData.longitude) {
-              vehicle.location = {
-                latitude: parseFloat(locationData.latitude),
-                longitude: parseFloat(locationData.longitude),
-              };
-
-              if (vehicle.location && typeof vehicle.location.latitude === 'number' && typeof vehicle.location.longitude === 'number') {
-                const marker = new google.maps.Marker({
-                  position: { lat: vehicle.location.latitude, lng: vehicle.location.longitude },
-                  map,
-                  title: vehicle.registration,
-                });
-                markers[vehicle.registration] = marker;
-              } else {
-                console.warn(`Invalid location data for vehicle ${vehicle.registration}.`);
-              }
-            } else {
-              console.warn(`No location data found for vehicle ${vehicle.registration}.`);
-            }
+            const marker = new google.maps.Marker({
+              position: { lat: vehicle.location.latitude, lng: vehicle.location.longitude },
+              map,
+              title: vehicle.registration,
+            });
+            markers[vehicle.registration] = marker;
           } else {
-            console.warn(`No location URL received for vehicle ${vehicle.registration}.`);
+            console.warn(`No location data for vehicle ${vehicle.registration}.`);
           }
-        } catch (error) {
-          console.error(`Failed to fetch location for vehicle ${vehicle.registration}:`, error);
+        });
+      } else {
+        console.error("Invalid status data received.");
+      }
+    }
+
+    // Get statuses for multiple vehicles
+    async function getCarsStatus(registrations) {
+      try {
+        let url = `${baseUrl}/vehicles/status?limit=10000`;
+        const requestOptions = createRequestOptions("GET");
+        let response = await fetch(url, requestOptions);
+        response = await response.json();
+        if (response?.data) {
+          return response.data.filter(item => registrations.includes(item.registration));
+        } else {
+          return [];
         }
-      }));
+      } catch (error) {
+        console.error("Error fetching vehicle statuses:", error);
+        return [];
+      }
     }
 
     // Update Map Markers based on selection
@@ -382,7 +392,10 @@
         <li><strong>ID:</strong> ${vehicle.id}</li>
         <li><strong>Registration:</strong> ${vehicle.registration}</li>
         <li><strong>Model:</strong> ${vehicle.model}</li>
-        <!-- You can add more details here if available -->
+        <li><strong>Door Status:</strong> ${vehicle.doorStatus || 'Unavailable'}</li>
+        <li><strong>Battery Level:</strong> ${vehicle.batteryLevel || 'Unavailable'}</li>
+        <li><strong>System Status:</strong> ${vehicle.systemStatus || 'Unavailable'}</li>
+        <li><strong>Last Active Time:</strong> ${vehicle.lastActiveTime || 'Unavailable'}</li>
         <li><strong>Last Known Location:</strong> ${vehicle.location 
           ? `Lat: ${vehicle.location.latitude}, Lng: ${vehicle.location.longitude}` 
           : 'Unavailable'}
@@ -391,57 +404,31 @@
 
       document.getElementById('lockButton').disabled = false;
       document.getElementById('unlockButton').disabled = false;
-      document.getElementById('hornButton').disabled = false;
     }
 
-    // Send Lock/Unlock/Horn Command
-    async function sendCommand(vehicle, command) {
-      try {
-        let endpoint;
-        let method;
-
-        if (command === 'LOCK' || command === 'UNLOCK') {
-          endpoint = `${baseUrl}/vehicles/${encodeURIComponent(vehicle.registration)}/central-locking`;
-          method = 'PUT';
-        } else if (command === 'HORN') {
-          endpoint = `${baseUrl}/vehicles/commands/${encodeURIComponent(vehicle.registration)}`;
-          method = 'POST';
-        } else {
-          throw new Error('Invalid command');
+    // Event Listeners for Lock and Unlock Buttons
+    document.getElementById('lockButton').addEventListener('click', async () => {
+      if (selectedVehicle) {
+        await commandCar(selectedVehicle.registration, 'LOCK');
+        // Optionally refresh vehicle details
+        const status = await getCarStatus(selectedVehicle.registration);
+        if (status) {
+          selectedVehicle.doorStatus = status.door_status;
+          displayVehicleDetails(selectedVehicle);
         }
-
-        const response = await fetch(endpoint, {
-          method: method,
-          headers: {
-            'Authorization': `Basic ${auth}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ command }),
-        });
-
-        if (!response.ok) throw new Error(`Error: ${response.status}`);
-        alert(`Command '${command}' sent to vehicle ${vehicle.registration}.`);
-
-        // Optionally, refetch vehicle details after command
-        await fetchVehicleDetails(vehicle);
-        displayVehicleDetails(vehicle);
-      } catch (error) {
-        console.error(`Failed to send '${command}' command:`, error);
-        alert(`Failed to send '${command}' command.`);
       }
-    }
-
-    // Event Listeners for Lock, Unlock, and Horn Buttons
-    document.getElementById('lockButton').addEventListener('click', () => {
-      if (selectedVehicle) sendCommand(selectedVehicle, 'LOCK');
     });
 
-    document.getElementById('unlockButton').addEventListener('click', () => {
-      if (selectedVehicle) sendCommand(selectedVehicle, 'UNLOCK');
-    });
-
-    document.getElementById('hornButton').addEventListener('click', () => {
-      if (selectedVehicle) sendCommand(selectedVehicle, 'HORN');
+    document.getElementById('unlockButton').addEventListener('click', async () => {
+      if (selectedVehicle) {
+        await commandCar(selectedVehicle.registration, 'UNLOCK');
+        // Optionally refresh vehicle details
+        const status = await getCarStatus(selectedVehicle.registration);
+        if (status) {
+          selectedVehicle.doorStatus = status.door_status;
+          displayVehicleDetails(selectedVehicle);
+        }
+      }
     });
 
     // Initialize map and fetch data on page load
