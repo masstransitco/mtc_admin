@@ -259,35 +259,43 @@
     // Fetch vehicle details (location, status, etc.)
     async function fetchVehicleDetails(vehicle) {
       try {
-        // Fetch vehicle status
-        const response = await fetch(`${baseUrl}/vehicles/status`, {
-          method: 'GET',
+        // Fetch vehicle location using the share-location-link endpoint
+        const response = await fetch(`${baseUrl}/vehicles/${encodeURIComponent(vehicle.registration)}/share-location-link`, {
+          method: 'POST',
           headers: {
             'Authorization': `Basic ${auth}`,
             'Content-Type': 'application/json',
           },
+          body: JSON.stringify({
+            // Set expiration timestamp to a future date
+            "expiration_ts": "2099-12-31 23:59:59"
+          }),
         });
 
         if (!response.ok) throw new Error(`Error: ${response.status}`);
         const data = await response.json();
 
-        if (data && Array.isArray(data.data)) {
-          const vehicleStatus = data.data.find(v => v.registration === vehicle.registration);
-          if (vehicleStatus) {
+        if (data && data.data && data.data.location_url) {
+          const locationUrl = data.data.location_url;
+          // Fetch the location data from the location URL
+          const locationResponse = await fetch(locationUrl);
+          if (!locationResponse.ok) throw new Error(`Error fetching location data: ${locationResponse.status}`);
+          const locationData = await locationResponse.json();
+
+          if (locationData && locationData.latitude && locationData.longitude) {
             vehicle.location = {
-              latitude: vehicleStatus.latitude,
-              longitude: vehicleStatus.longitude,
+              latitude: parseFloat(locationData.latitude),
+              longitude: parseFloat(locationData.longitude),
             };
-            vehicle.doorStatus = vehicleStatus.door_status;
-            vehicle.batteryLevel = vehicleStatus.battery_level;
-            vehicle.systemStatus = vehicleStatus.system_status;
-            vehicle.lastActiveTime = vehicleStatus.last_active_time;
           } else {
-            console.warn(`No status data found for vehicle ${vehicle.registration}.`);
+            console.warn(`No location data found for vehicle ${vehicle.registration}.`);
           }
         } else {
-          console.warn("Invalid data format received from status API.");
+          console.warn(`No location URL received for vehicle ${vehicle.registration}.`);
         }
+
+        // Optionally, fetch other vehicle statuses if available
+
       } catch (error) {
         console.error(`Failed to fetch details for vehicle ${vehicle.registration}:`, error);
       }
@@ -301,25 +309,35 @@
       }
       markers = {};
 
-      try {
-        const response = await fetch(`${baseUrl}/vehicles/status`, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Basic ${auth}`,
-            'Content-Type': 'application/json',
-          },
-        });
+      // Fetch location for all vehicles
+      await Promise.all(vehicles.map(async (vehicle) => {
+        try {
+          const response = await fetch(`${baseUrl}/vehicles/${encodeURIComponent(vehicle.registration)}/share-location-link`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Basic ${auth}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              // Set expiration timestamp to a future date
+              "expiration_ts": "2099-12-31 23:59:59"
+            }),
+          });
 
-        if (!response.ok) throw new Error(`Error: ${response.status}`);
-        const data = await response.json();
+          if (!response.ok) throw new Error(`Error: ${response.status}`);
+          const data = await response.json();
 
-        if (data && Array.isArray(data.data)) {
-          vehicles.forEach(vehicle => {
-            const vehicleStatus = data.data.find(v => v.registration === vehicle.registration);
-            if (vehicleStatus) {
+          if (data && data.data && data.data.location_url) {
+            const locationUrl = data.data.location_url;
+            // Fetch the location data from the location URL
+            const locationResponse = await fetch(locationUrl);
+            if (!locationResponse.ok) throw new Error(`Error fetching location data: ${locationResponse.status}`);
+            const locationData = await locationResponse.json();
+
+            if (locationData && locationData.latitude && locationData.longitude) {
               vehicle.location = {
-                latitude: vehicleStatus.latitude,
-                longitude: vehicleStatus.longitude,
+                latitude: parseFloat(locationData.latitude),
+                longitude: parseFloat(locationData.longitude),
               };
 
               if (vehicle.location && typeof vehicle.location.latitude === 'number' && typeof vehicle.location.longitude === 'number') {
@@ -333,15 +351,15 @@
                 console.warn(`Invalid location data for vehicle ${vehicle.registration}.`);
               }
             } else {
-              console.warn(`No status data found for vehicle ${vehicle.registration}.`);
+              console.warn(`No location data found for vehicle ${vehicle.registration}.`);
             }
-          });
-        } else {
-          console.warn("Invalid data format received from status API.");
+          } else {
+            console.warn(`No location URL received for vehicle ${vehicle.registration}.`);
+          }
+        } catch (error) {
+          console.error(`Failed to fetch location for vehicle ${vehicle.registration}:`, error);
         }
-      } catch (error) {
-        console.error("Failed to fetch vehicle statuses:", error);
-      }
+      }));
     }
 
     // Update Map Markers based on selection
@@ -364,10 +382,7 @@
         <li><strong>ID:</strong> ${vehicle.id}</li>
         <li><strong>Registration:</strong> ${vehicle.registration}</li>
         <li><strong>Model:</strong> ${vehicle.model}</li>
-        <li><strong>Door Status:</strong> ${vehicle.doorStatus || 'Unavailable'}</li>
-        <li><strong>Battery Level:</strong> ${vehicle.batteryLevel || 'Unavailable'}</li>
-        <li><strong>System Status:</strong> ${vehicle.systemStatus || 'Unavailable'}</li>
-        <li><strong>Last Active Time:</strong> ${vehicle.lastActiveTime || 'Unavailable'}</li>
+        <!-- You can add more details here if available -->
         <li><strong>Last Known Location:</strong> ${vehicle.location 
           ? `Lat: ${vehicle.location.latitude}, Lng: ${vehicle.location.longitude}` 
           : 'Unavailable'}
