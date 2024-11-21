@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <title>Fleet Ops</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Fleet Management</title>
   <style>
     /* General Reset */
     * {
@@ -32,7 +32,10 @@
     }
 
     header h1 {
-      font-size: 1.5rem;
+      font-family: Helvetica, Arial, sans-serif;
+      font-size: 1.05rem; /* Reduced by 30% */
+      text-align: left;
+      margin-left: 0;
     }
 
     #map {
@@ -57,7 +60,6 @@
     }
 
     .details-section {
-      height: 50vh;
       padding: 20px;
       background-color: #fff;
       overflow-y: auto;
@@ -107,13 +109,30 @@
     button:hover {
       opacity: 0.9;
     }
+
+    /* Container for 3D Model */
+    .model-container {
+      width: 100%;
+      height: 0;
+      padding-bottom: 30%; /* Aspect ratio of 0.3 */
+      position: relative;
+      margin-bottom: 20px;
+    }
+
+    .model-container iframe {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
   </style>
+  <!-- Replace 'YOUR_GOOGLE_MAPS_API_KEY' with your actual Google Maps API key -->
   <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA8rDrxBzMRlgbA7BQ2DoY31gEXzZ4Ours"></script>
 </head>
 <body>
   <header>
     <img src="logo.png" alt="Logo">
-    <h1>Fleet Management</h1>
+    <h1>Fleet Ops</h1>
   </header>
 
   <div id="map"></div>
@@ -127,6 +146,10 @@
 
   <div class="details-section">
     <h2>Vehicle Details</h2>
+    <div class="model-container">
+      <!-- Embed Sketchfab 3D Model -->
+      <iframe src="https://sketchfab.com/models/2c530666fa834f71b75f526f1bb1eb40/embed"></iframe>
+    </div>
     <ul id="vehicleDetails">
       <li>Select a vehicle to see details here...</li>
     </ul>
@@ -143,7 +166,7 @@
     const baseUrl = 'https://fleetapi-hk.cartrack.com/rest';
 
     let map;
-    let markers = [];
+    let markers = {};
     let selectedVehicle = null;
 
     // Initialize Google Map
@@ -191,18 +214,28 @@
         if (selectedRegistration) {
           selectedVehicle = vehicles.find(v => v.registration === selectedRegistration);
           displayVehicleDetails(selectedVehicle);
+          updateMapMarkers(selectedVehicle);
         } else {
           selectedVehicle = null;
           document.getElementById('lockButton').disabled = true;
           document.getElementById('unlockButton').disabled = true;
+          // Show all markers
+          for (let reg in markers) {
+            markers[reg].setVisible(true);
+          }
+          map.setZoom(12);
+          map.setCenter({ lat: 22.3193, lng: 114.1694 });
         }
       });
     }
 
     // Plot Vehicles on Map
     function plotVehiclesOnMap(vehicles) {
-      markers.forEach(marker => marker.setMap(null)); // Clear existing markers
-      markers = [];
+      // Clear existing markers
+      for (let reg in markers) {
+        markers[reg].setMap(null);
+      }
+      markers = {};
 
       vehicles.forEach(vehicle => {
         if (vehicle.location) {
@@ -211,9 +244,22 @@
             map,
             title: vehicle.registration,
           });
-          markers.push(marker);
+          markers[vehicle.registration] = marker;
         }
       });
+    }
+
+    // Update Map Markers based on selection
+    function updateMapMarkers(selectedVehicle) {
+      for (let reg in markers) {
+        if (reg === selectedVehicle.registration) {
+          markers[reg].setVisible(true);
+          map.setCenter(markers[reg].getPosition());
+          map.setZoom(18); // Street level zoom
+        } else {
+          markers[reg].setVisible(false);
+        }
+      }
     }
 
     // Display Selected Vehicle Details
