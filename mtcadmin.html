@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fleet Management</title>
+  <style>
+    /* General Reset */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      color: #333;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      padding: 10px 20px;
+      background-color: #000;
+      color: #fff;
+    }
+
+    header img {
+      height: 40px;
+      margin-right: 10px;
+    }
+
+    header h1 {
+      font-size: 1.5rem;
+    }
+
+    #map {
+      height: 50vh;
+      width: 100%;
+    }
+
+    .dropdown-section {
+      padding: 10px 20px;
+      background-color: #fff;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    select {
+      padding: 10px;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      width: 300px;
+    }
+
+    .details-section {
+      height: 50vh;
+      padding: 20px;
+      background-color: #fff;
+      overflow-y: auto;
+    }
+
+    .details-section h2 {
+      margin-bottom: 10px;
+    }
+
+    .details-section ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .details-section li {
+      padding: 10px;
+      background: #f9f9f9;
+      margin-bottom: 5px;
+      border-radius: 5px;
+      border: 1px solid #ddd;
+    }
+
+    .details-section .button-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .details-section button {
+      padding: 10px 15px;
+      font-size: 1rem;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .lock-btn {
+      background-color: #ff4d4d; /* Uber red */
+    }
+
+    .unlock-btn {
+      background-color: #4caf50; /* Uber green */
+    }
+
+    button:hover {
+      opacity: 0.9;
+    }
+  </style>
+  <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA8rDrxBzMRlgbA7BQ2DoY31gEXzZ4Ours"></script>
+</head>
+<body>
+  <header>
+    <img src="logo.png" alt="Logo">
+    <h1>Fleet Management</h1>
+  </header>
+
+  <div id="map"></div>
+
+  <div class="dropdown-section">
+    <label for="vehicleSelector">Select a Vehicle:</label>
+    <select id="vehicleSelector">
+      <option value="">-- Loading Vehicles --</option>
+    </select>
+  </div>
+
+  <div class="details-section">
+    <h2>Vehicle Details</h2>
+    <ul id="vehicleDetails">
+      <li>Select a vehicle to see details here...</li>
+    </ul>
+    <div class="button-group">
+      <button id="lockButton" class="lock-btn" disabled>Lock</button>
+      <button id="unlockButton" class="unlock-btn" disabled>Unlock</button>
+    </div>
+  </div>
+
+  <script>
+    const username = 'URBA00001';
+    const token = 'fd58cd26fefc8c2b2ba1f7f52b33221a65f645790a43ff9b8da35db7da6e1f33';
+    const auth = btoa(`${username}:${token}`);
+    const baseUrl = 'https://fleetapi-hk.cartrack.com/rest';
+
+    let map;
+    let markers = [];
+    let selectedVehicle = null;
+
+    // Initialize Google Map
+    function initMap() {
+      map = new google.maps.Map(document.getElementById("map"), {
+        center: { lat: 22.3193, lng: 114.1694 }, // Default center (Hong Kong)
+        zoom: 12,
+      });
+    }
+
+    // Fetch vehicles from Cartrack API
+    async function fetchVehicles() {
+      try {
+        const response = await fetch(`${baseUrl}/vehicles`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Basic ${auth}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) throw new Error(`Error: ${response.status}`);
+        const data = await response.json();
+
+        populateDropdown(data.data);
+        plotVehiclesOnMap(data.data);
+      } catch (error) {
+        console.error("Failed to fetch vehicles:", error);
+      }
+    }
+
+    // Populate Dropdown
+    function populateDropdown(vehicles) {
+      const selector = document.getElementById('vehicleSelector');
+      selector.innerHTML = `<option value="">-- Select a Vehicle --</option>`;
+      vehicles.forEach(vehicle => {
+        const option = document.createElement('option');
+        option.value = vehicle.registration;
+        option.textContent = `${vehicle.registration} (${vehicle.model})`;
+        selector.appendChild(option);
+      });
+
+      selector.addEventListener('change', () => {
+        const selectedRegistration = selector.value;
+        if (selectedRegistration) {
+          selectedVehicle = vehicles.find(v => v.registration === selectedRegistration);
+          displayVehicleDetails(selectedVehicle);
+        } else {
+          selectedVehicle = null;
+          document.getElementById('lockButton').disabled = true;
+          document.getElementById('unlockButton').disabled = true;
+        }
+      });
+    }
+
+    // Plot Vehicles on Map
+    function plotVehiclesOnMap(vehicles) {
+      markers.forEach(marker => marker.setMap(null)); // Clear existing markers
+      markers = [];
+
+      vehicles.forEach(vehicle => {
+        if (vehicle.location) {
+          const marker = new google.maps.Marker({
+            position: { lat: vehicle.location.latitude, lng: vehicle.location.longitude },
+            map,
+            title: vehicle.registration,
+          });
+          markers.push(marker);
+        }
+      });
+    }
+
+    // Display Selected Vehicle Details
+    function displayVehicleDetails(vehicle) {
+      const detailsList = document.getElementById('vehicleDetails');
+      detailsList.innerHTML = `
+        <li><strong>Registration:</strong> ${vehicle.registration}</li>
+        <li><strong>Model:</strong> ${vehicle.model}</li>
+        <li><strong>Status:</strong> ${vehicle.status}</li>
+        <li><strong>Last Known Location:</strong> ${vehicle.location 
+          ? `Lat: ${vehicle.location.latitude}, Lng: ${vehicle.location.longitude}` 
+          : 'Unavailable'}
+        </li>
+      `;
+
+      document.getElementById('lockButton').disabled = false;
+      document.getElementById('unlockButton').disabled = false;
+    }
+
+    // Send Lock/Unlock Command
+    async function sendCommand(vehicle, command) {
+      try {
+        const response = await fetch(`${baseUrl}/vehicles/commands/${vehicle.registration}`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Basic ${auth}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ command }),
+        });
+
+        if (!response.ok) throw new Error(`Error: ${response.status}`);
+        alert(`Command '${command}' sent to vehicle ${vehicle.registration}.`);
+      } catch (error) {
+        console.error(`Failed to send '${command}' command:`, error);
+        alert(`Failed to send '${command}' command.`);
+      }
+    }
+
+    // Event Listeners for Lock and Unlock Buttons
+    document.getElementById('lockButton').addEventListener('click', () => {
+      if (selectedVehicle) sendCommand(selectedVehicle, 'LOCK');
+    });
+
+    document.getElementById('unlockButton').addEventListener('click', () => {
+      if (selectedVehicle) sendCommand(selectedVehicle, 'UNLOCK');
+    });
+
+    // Initialize map and fetch data on page load
+    window.onload = () => {
+      initMap();
+      fetchVehicles();
+    };
+  </script>
+</body>
+</html>
