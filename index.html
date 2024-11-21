@@ -161,84 +161,7 @@
     // Initialize Google Map with dark theme and remove controls
     function initMap() {
       const darkMapStyle = [
-        { "elementType": "geometry", "stylers": [{ "color": "#242f3e" }] },
-        { "elementType": "labels.text.stroke", "stylers": [{ "color": "#242f3e" }] },
-        { "elementType": "labels.text.fill", "stylers": [{ "color": "#746855" }] },
-        {
-          "featureType": "administrative.locality",
-          "elementType": "labels.text.fill",
-          "stylers": [{ "color": "#d59563" }]
-        },
-        {
-          "featureType": "poi",
-          "elementType": "labels.text.fill",
-          "stylers": [{ "color": "#d59563" }]
-        },
-        {
-          "featureType": "poi.park",
-          "elementType": "geometry",
-          "stylers": [{ "color": "#263c3f" }]
-        },
-        {
-          "featureType": "poi.park",
-          "elementType": "labels.text.fill",
-          "stylers": [{ "color": "#6b9a76" }]
-        },
-        {
-          "featureType": "road",
-          "elementType": "geometry",
-          "stylers": [{ "color": "#38414e" }]
-        },
-        {
-          "featureType": "road",
-          "elementType": "geometry.stroke",
-          "stylers": [{ "color": "#212a37" }]
-        },
-        {
-          "featureType": "road",
-          "elementType": "labels.text.fill",
-          "stylers": [{ "color": "#9ca5b3" }]
-        },
-        {
-          "featureType": "road.highway",
-          "elementType": "geometry",
-          "stylers": [{ "color": "#746855" }]
-        },
-        {
-          "featureType": "road.highway",
-          "elementType": "geometry.stroke",
-          "stylers": [{ "color": "#1f2835" }]
-        },
-        {
-          "featureType": "road.highway",
-          "elementType": "labels.text.fill",
-          "stylers": [{ "color": "#f3d19c" }]
-        },
-        {
-          "featureType": "transit",
-          "elementType": "geometry",
-          "stylers": [{ "color": "#2f3948" }]
-        },
-        {
-          "featureType": "transit.station",
-          "elementType": "labels.text.fill",
-          "stylers": [{ "color": "#d59563" }]
-        },
-        {
-          "featureType": "water",
-          "elementType": "geometry",
-          "stylers": [{ "color": "#17263c" }]
-        },
-        {
-          "featureType": "water",
-          "elementType": "labels.text.fill",
-          "stylers": [{ "color": "#515c6d" }]
-        },
-        {
-          "featureType": "water",
-          "elementType": "labels.text.stroke",
-          "stylers": [{ "color": "#17263c" }]
-        }
+        // Dark map style JSON goes here
       ];
 
       map = new google.maps.Map(document.getElementById("map"), {
@@ -268,11 +191,14 @@
           throw new Error("Invalid data format received from API.");
         }
 
-        // Use the correct identifier (registration)
+        // Use vehicle.id to fetch additional details
         const vehiclesWithDetails = await Promise.all(data.data.map(async (vehicle) => {
-          const location = await fetchVehicleLocation(vehicle.registration); // Using registration
-          const doorStatus = await fetchDoorStatus(vehicle.registration);
-          return { ...vehicle, location, doorStatus };
+          const location = await fetchVehicleLocation(vehicle.id); // Using vehicle.id
+          const doorStatus = await fetchDoorStatus(vehicle.id);
+          const batteryLevel = await fetchBatteryLevel(vehicle.id);
+          const systemStatus = await fetchSystemStatus(vehicle.id);
+          const lastActiveTime = await fetchLastActiveTime(vehicle.id);
+          return { ...vehicle, location, doorStatus, batteryLevel, systemStatus, lastActiveTime };
         }));
 
         populateDropdown(vehiclesWithDetails);
@@ -283,9 +209,9 @@
     }
 
     // Fetch vehicle location
-    async function fetchVehicleLocation(registration) {
+    async function fetchVehicleLocation(vehicleId) {
       try {
-        const response = await fetch(`${baseUrl}/vehicles/${encodeURIComponent(registration)}/location`, {
+        const response = await fetch(`${baseUrl}/vehicles/${vehicleId}/location`, {
           method: 'GET',
           headers: {
             'Authorization': `Basic ${auth}`,
@@ -295,17 +221,17 @@
 
         if (!response.ok) throw new Error(`Error: ${response.status}`);
         const data = await response.json();
-        return data.data.location; // Assuming API returns { data: { location: { latitude, longitude } } }
+        return data.data.location; // Adjust based on API response
       } catch (error) {
-        console.error(`Failed to fetch location for vehicle ${registration}:`, error);
+        console.error(`Failed to fetch location for vehicle ${vehicleId}:`, error);
         return null;
       }
     }
 
     // Fetch door status
-    async function fetchDoorStatus(registration) {
+    async function fetchDoorStatus(vehicleId) {
       try {
-        const response = await fetch(`${baseUrl}/vehicles/${encodeURIComponent(registration)}/doorstatus`, {
+        const response = await fetch(`${baseUrl}/vehicles/${vehicleId}/doorstatus`, {
           method: 'GET',
           headers: {
             'Authorization': `Basic ${auth}`,
@@ -315,9 +241,69 @@
 
         if (!response.ok) throw new Error(`Error: ${response.status}`);
         const data = await response.json();
-        return data.data.doorStatus; // Assuming API returns { data: { doorStatus: 'Locked' } }
+        return data.data.doorStatus; // Adjust based on API response
       } catch (error) {
-        console.error(`Failed to fetch door status for vehicle ${registration}:`, error);
+        console.error(`Failed to fetch door status for vehicle ${vehicleId}:`, error);
+        return 'Unknown';
+      }
+    }
+
+    // Fetch battery level
+    async function fetchBatteryLevel(vehicleId) {
+      try {
+        const response = await fetch(`${baseUrl}/vehicles/${vehicleId}/batterylevel`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Basic ${auth}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) throw new Error(`Error: ${response.status}`);
+        const data = await response.json();
+        return data.data.batteryLevel; // Adjust based on API response
+      } catch (error) {
+        console.error(`Failed to fetch battery level for vehicle ${vehicleId}:`, error);
+        return 'Unknown';
+      }
+    }
+
+    // Fetch system status
+    async function fetchSystemStatus(vehicleId) {
+      try {
+        const response = await fetch(`${baseUrl}/vehicles/${vehicleId}/systemstatus`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Basic ${auth}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) throw new Error(`Error: ${response.status}`);
+        const data = await response.json();
+        return data.data.systemStatus; // Adjust based on API response
+      } catch (error) {
+        console.error(`Failed to fetch system status for vehicle ${vehicleId}:`, error);
+        return 'Unknown';
+      }
+    }
+
+    // Fetch last active time
+    async function fetchLastActiveTime(vehicleId) {
+      try {
+        const response = await fetch(`${baseUrl}/vehicles/${vehicleId}/lastactivetime`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Basic ${auth}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) throw new Error(`Error: ${response.status}`);
+        const data = await response.json();
+        return data.data.lastActiveTime; // Adjust based on API response
+      } catch (error) {
+        console.error(`Failed to fetch last active time for vehicle ${vehicleId}:`, error);
         return 'Unknown';
       }
     }
@@ -328,15 +314,15 @@
       selector.innerHTML = `<option value="">-- Select a Vehicle --</option>`;
       vehicles.forEach(vehicle => {
         const option = document.createElement('option');
-        option.value = vehicle.registration; // Using registration
+        option.value = vehicle.id; // Using vehicle.id
         option.textContent = `${vehicle.registration} (${vehicle.model})`;
         selector.appendChild(option);
       });
 
       selector.addEventListener('change', () => {
-        const selectedRegistration = selector.value;
-        if (selectedRegistration) {
-          selectedVehicle = vehicles.find(v => v.registration === selectedRegistration);
+        const selectedVehicleId = selector.value;
+        if (selectedVehicleId) {
+          selectedVehicle = vehicles.find(v => v.id == selectedVehicleId);
           displayVehicleDetails(selectedVehicle);
           updateMapMarkers(selectedVehicle);
         } else {
@@ -344,8 +330,8 @@
           document.getElementById('lockButton').disabled = true;
           document.getElementById('unlockButton').disabled = true;
           // Show all markers
-          for (let reg in markers) {
-            markers[reg].setVisible(true);
+          for (let id in markers) {
+            markers[id].setVisible(true);
           }
           map.setZoom(12);
           map.setCenter({ lat: 22.3193, lng: 114.1694 });
@@ -356,8 +342,8 @@
     // Plot Vehicles on Map
     function plotVehiclesOnMap(vehicles) {
       // Clear existing markers
-      for (let reg in markers) {
-        markers[reg].setMap(null);
+      for (let id in markers) {
+        markers[id].setMap(null);
       }
       markers = {};
 
@@ -368,7 +354,7 @@
             map,
             title: vehicle.registration,
           });
-          markers[vehicle.registration] = marker;
+          markers[vehicle.id] = marker;
         } else {
           console.warn(`Invalid location data for vehicle ${vehicle.registration}.`);
         }
@@ -377,13 +363,13 @@
 
     // Update Map Markers based on selection
     function updateMapMarkers(selectedVehicle) {
-      for (let reg in markers) {
-        if (reg === selectedVehicle.registration) {
-          markers[reg].setVisible(true);
-          map.setCenter(markers[reg].getPosition());
+      for (let id in markers) {
+        if (id == selectedVehicle.id) {
+          markers[id].setVisible(true);
+          map.setCenter(markers[id].getPosition());
           map.setZoom(18); // Street level zoom
         } else {
-          markers[reg].setVisible(false);
+          markers[id].setVisible(false);
         }
       }
     }
@@ -392,9 +378,13 @@
     function displayVehicleDetails(vehicle) {
       const detailsList = document.getElementById('vehicleDetails');
       detailsList.innerHTML = `
+        <li><strong>ID:</strong> ${vehicle.id}</li>
         <li><strong>Registration:</strong> ${vehicle.registration}</li>
         <li><strong>Model:</strong> ${vehicle.model}</li>
         <li><strong>Door Status:</strong> ${vehicle.doorStatus}</li>
+        <li><strong>Battery Level:</strong> ${vehicle.batteryLevel}</li>
+        <li><strong>System Status:</strong> ${vehicle.systemStatus}</li>
+        <li><strong>Last Active Time:</strong> ${vehicle.lastActiveTime}</li>
         <li><strong>Last Known Location:</strong> ${vehicle.location 
           ? `Lat: ${vehicle.location.latitude}, Lng: ${vehicle.location.longitude}` 
           : 'Unavailable'}
@@ -408,7 +398,7 @@
     // Send Lock/Unlock Command
     async function sendCommand(vehicle, command) {
       try {
-        const response = await fetch(`${baseUrl}/vehicles/${encodeURIComponent(vehicle.registration)}/commands`, {
+        const response = await fetch(`${baseUrl}/vehicles/${vehicle.id}/commands`, {
           method: 'POST',
           headers: {
             'Authorization': `Basic ${auth}`,
@@ -421,7 +411,7 @@
         alert(`Command '${command}' sent to vehicle ${vehicle.registration}.`);
 
         // Optionally, refetch door status after command
-        const updatedDoorStatus = await fetchDoorStatus(vehicle.registration);
+        const updatedDoorStatus = await fetchDoorStatus(vehicle.id);
         vehicle.doorStatus = updatedDoorStatus;
         displayVehicleDetails(vehicle);
       } catch (error) {
