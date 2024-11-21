@@ -21,25 +21,28 @@
     header {
       display: flex;
       align-items: center;
-      justify-content: center; /* Center the dropdown */
+      justify-content: space-between; /* Align items to left and right */
       padding: 2px 20px; /* 2px padding on top and bottom */
       background-color: #1e1e1e; /* Slightly lighter dark for header */
-      position: relative;
       height: 60px; /* Adjust height to accommodate dropdown */
     }
 
     header img {
       height: 40px;
       margin-right: 10px;
-      position: absolute;
-      left: 20px;
     }
 
-    header h1 {
-      font-size: 0.735rem; /* 1.05rem reduced by 30% */
-      text-align: right;
-      position: absolute;
-      right: 20px;
+    .dropdown-container {
+      /* Additional styling if needed */
+    }
+
+    .dropdown-container select {
+      padding: 5px;
+      font-size: 1rem;
+    }
+
+    .map-container {
+      padding: 0 20px;
     }
 
     #map {
@@ -57,13 +60,21 @@
       margin-bottom: 10px;
     }
 
-    .details-section ul {
+    .details-container {
+      display: flex;
+    }
+
+    .items-list {
+      width: 50%;
+    }
+
+    .items-list ul {
       list-style: none;
       margin: 0;
       padding: 0;
     }
 
-    .details-section li {
+    .items-list li {
       padding: 10px;
       background: #2c2c2c;
       margin-bottom: 5px;
@@ -71,35 +82,62 @@
       border: 1px solid #444;
     }
 
-    .details-section .button-group {
+    .items-list .button-group {
       display: flex;
       gap: 10px;
       margin-top: 20px;
     }
 
-    .details-section button {
+    .items-list button {
       padding: 10px 15px;
       font-size: 1rem;
-      color: #fff;
       border: none;
       border-radius: 5px;
       cursor: pointer;
     }
 
     .lock-btn {
-      background-color: #ff4d4d; /* Uber red */
+      background-color: #C7C7CC; /* Uber gray */
+      color: #000; /* Black text */
     }
 
     .unlock-btn {
-      background-color: #4caf50; /* Uber green */
-    }
-
-    .horn-btn {
-      background-color: #ffc107; /* Amber color for horn button */
+      background-color: #276EF1; /* Uber blue */
+      color: #fff; /* White text */
     }
 
     button:hover {
       opacity: 0.9;
+    }
+
+    .right-container {
+      width: 50%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: sans-serif;
+    }
+
+    .choose-destination-btn {
+      background-color: #276EF1; /* Uber blue */
+      color: #fff;
+      padding: 10px 20px;
+      font-size: 1rem;
+      margin-bottom: 10px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .pay-as-you-go-btn {
+      background-color: #C7C7CC; /* Uber gray */
+      color: #000;
+      padding: 10px 20px;
+      font-size: 1rem;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
     }
 
     /* Container for 3D Model */
@@ -119,7 +157,7 @@
     }
   </style>
   <!-- Replace 'YOUR_GOOGLE_MAPS_API_KEY' with your actual Google Maps API key -->
-  <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA8rDrxBzMRlgbA7BQ2DoY31gEXzZ4Ours"></script>
+  <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA8rDrxBzMRlgbA7BQ2DoY31gEXzZ4Ours&language=zh-HK"></script>
 </head>
 <body>
   <header>
@@ -129,32 +167,39 @@
         <option value="">-- Loading Vehicles --</option>
       </select>
     </div>
-    <h1>Fleet Ops</h1>
   </header>
 
-  <div id="map"></div>
+  <div class="map-container">
+    <div id="map"></div>
+  </div>
 
   <div class="details-section">
-    <h2>Vehicle Details</h2>
-    <div class="model-container">
-      <!-- Embed Sketchfab 3D Model -->
-      <div class="sketchfab-embed-wrapper">
-        <iframe title="mtc" frameborder="0" allowfullscreen mozallowfullscreen="true"
-          webkitallowfullscreen="true" allow="autoplay; fullscreen; xr-spatial-tracking"
-          xr-spatial-tracking execution-while-out-of-viewport execution-while-not-rendered web-share
-          width="640" height="480"
-          src="https://sketchfab.com/models/2c530666fa834f71b75f526f1bb1eb40/embed?autostart=1&camera=0&ui_animations=0&ui_infos=0&ui_stop=0&ui_inspector=0&ui_watermark_link=0&ui_watermark=0&ui_ar=0&ui_help=0&ui_settings=0&ui_vr=0&ui_fullscreen=0&ui_annotations=0">
-        </iframe>
+    <h2>Details</h2>
+    <div class="details-container">
+      <div class="items-list">
+        <!-- Embed Sketchfab 3D Model -->
+        <div class="model-container">
+          <div class="sketchfab-embed-wrapper">
+            <iframe title="mtc" frameborder="0" allowfullscreen mozallowfullscreen="true"
+              webkitallowfullscreen="true" allow="autoplay; fullscreen; xr-spatial-tracking"
+              xr-spatial-tracking execution-while-out-of-viewport execution-while-not-rendered web-share
+              width="640" height="480"
+              src="https://sketchfab.com/models/2c530666fa834f71b75f526f1bb1eb40/embed?autostart=1&camera=0&ui_animations=0&ui_infos=0&ui_stop=0&ui_inspector=0&ui_watermark_link=0&ui_watermark=0&ui_ar=0&ui_help=0&ui_settings=0&ui_vr=0&ui_fullscreen=0&ui_annotations=0">
+            </iframe>
+          </div>
+        </div>
+        <ul id="vehicleDetails">
+          <li>Select a vehicle to see details here...</li>
+        </ul>
+        <div class="button-group">
+          <button id="lockButton" class="lock-btn" disabled>Lock</button>
+          <button id="unlockButton" class="unlock-btn" disabled>Unlock</button>
+        </div>
       </div>
-    </div>
-    <ul id="vehicleDetails">
-      <li>Select a vehicle to see details here...</li>
-    </ul>
-    <div class="button-group">
-      <button id="lockButton" class="lock-btn" disabled>Lock</button>
-      <button id="unlockButton" class="unlock-btn" disabled>Unlock</button>
-      <!-- If you have a horn function, you can include it -->
-      <!-- <button id="hornButton" class="horn-btn" disabled>Horn</button> -->
+      <div class="right-container">
+        <button id="chooseDestinationButton" class="choose-destination-btn">Choose Destination</button>
+        <button id="payAsYouGoButton" class="pay-as-you-go-btn">Pay-As-You-Go</button>
+      </div>
     </div>
   </div>
 
@@ -166,38 +211,117 @@
     const baseUrl = 'https://fleetapi-hk.cartrack.com/rest';
 
     let map;
+    let geocoder;
     let markers = {};
     let selectedVehicle = null;
     let vehicles = [];
 
-    // Initialize Google Map with dark theme and remove controls
+    // Initialize Google Map with terrain and custom styles
     function initMap() {
-      const darkMapStyle = [
+      geocoder = new google.maps.Geocoder();
+
+      const customMapStyle = [
         {
-          "elementType": "geometry",
-          "stylers": [{"color": "#242f3e"}]
+          "featureType": "all",
+          "elementType": "labels",
+          "stylers": [
+            { "visibility": "off" }
+          ]
         },
         {
-          "elementType": "labels.text.stroke",
-          "stylers": [{"color": "#242f3e"}]
+          "featureType": "administrative.locality",
+          "elementType": "labels",
+          "stylers": [
+            { "visibility": "on" }
+          ]
         },
         {
+          "featureType": "administrative.locality",
           "elementType": "labels.text.fill",
-          "stylers": [{"color": "#746855"}]
+          "stylers": [
+            { "color": "#ffffff" }
+          ]
         },
-        // Add more styles as needed
+        // Show terrain
+        {
+          "featureType": "landscape",
+          "elementType": "geometry",
+          "stylers": [
+            { "visibility": "on" },
+            { "color": "#2c2c2c" }
+          ]
+        },
+        // Hide points of interest and road labels
+        {
+          "featureType": "poi",
+          "stylers": [
+            { "visibility": "off" }
+          ]
+        },
+        {
+          "featureType": "road",
+          "elementType": "labels",
+          "stylers": [
+            { "visibility": "off" }
+          ]
+        },
+        // Additional styling as needed
       ];
 
       map = new google.maps.Map(document.getElementById("map"), {
         center: { lat: 22.3193, lng: 114.1694 }, // Default center (Hong Kong)
         zoom: 12,
-        styles: darkMapStyle,
+        styles: customMapStyle,
         streetViewControl: false,
         mapTypeControl: false,
+        mapTypeId: 'terrain',
       });
+
+      // Add user's current location as a blue dot
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const pos = {
+              lat: position.coords.latitude,
+              lng: position.coords.longitude,
+            };
+
+            const userLocationMarker = new google.maps.Marker({
+              position: pos,
+              map: map,
+              title: 'Your Location',
+              icon: {
+                path: google.maps.SymbolPath.CIRCLE,
+                scale: 8,
+                fillColor: '#4285F4',
+                fillOpacity: 1,
+                strokeColor: 'white',
+                strokeWeight: 2,
+              },
+            });
+
+            // Optional: Center map on user's location
+            // map.setCenter(pos);
+          },
+          () => {
+            handleLocationError(true, map.getCenter());
+          }
+        );
+      } else {
+        // Browser doesn't support Geolocation
+        handleLocationError(false, map.getCenter());
+      }
+
+      function handleLocationError(browserHasGeolocation, pos) {
+        console.error(
+          browserHasGeolocation
+            ? 'Error: The Geolocation service failed.'
+            : "Error: Your browser doesn't support geolocation."
+        );
+      }
     }
 
-    // API Functions (extracted from your provided code)
+    // API Functions
 
     // Create request options
     function createRequestOptions(method, contentType = null, body = null) {
@@ -250,6 +374,24 @@
       }
     }
 
+    // Get statuses for multiple vehicles
+    async function getCarsStatus(registrations) {
+      try {
+        let url = `${baseUrl}/vehicles/status?limit=10000`;
+        const requestOptions = createRequestOptions("GET");
+        let response = await fetch(url, requestOptions);
+        response = await response.json();
+        if (response?.data) {
+          return response.data.filter(item => registrations.includes(item.registration));
+        } else {
+          return [];
+        }
+      } catch (error) {
+        console.error("Error fetching vehicle statuses:", error);
+        return [];
+      }
+    }
+
     // Command car (lock/unlock)
     async function commandCar(registration, commandType) {
       try {
@@ -296,8 +438,8 @@
           const status = await getCarStatus(selectedVehicle.registration);
           if (status) {
             selectedVehicle.location = {
-              latitude: status.location.latitude,
-              longitude: status.location.longitude,
+              lat: status.location.latitude,
+              lng: status.location.longitude,
             };
             selectedVehicle.doorStatus = status.door_status;
             selectedVehicle.batteryLevel = status.battery_level;
@@ -335,12 +477,12 @@
           const status = statusResponse.find(s => s.registration === vehicle.registration);
           if (status && status.location) {
             vehicle.location = {
-              latitude: status.location.latitude,
-              longitude: status.location.longitude,
+              lat: status.location.latitude,
+              lng: status.location.longitude,
             };
 
             const marker = new google.maps.Marker({
-              position: { lat: vehicle.location.latitude, lng: vehicle.location.longitude },
+              position: vehicle.location,
               map,
               title: vehicle.registration,
             });
@@ -351,24 +493,6 @@
         });
       } else {
         console.error("Invalid status data received.");
-      }
-    }
-
-    // Get statuses for multiple vehicles
-    async function getCarsStatus(registrations) {
-      try {
-        let url = `${baseUrl}/vehicles/status?limit=10000`;
-        const requestOptions = createRequestOptions("GET");
-        let response = await fetch(url, requestOptions);
-        response = await response.json();
-        if (response?.data) {
-          return response.data.filter(item => registrations.includes(item.registration));
-        } else {
-          return [];
-        }
-      } catch (error) {
-        console.error("Error fetching vehicle statuses:", error);
-        return [];
       }
     }
 
@@ -389,18 +513,39 @@
     function displayVehicleDetails(vehicle) {
       const detailsList = document.getElementById('vehicleDetails');
       detailsList.innerHTML = `
-        <li><strong>ID:</strong> ${vehicle.id}</li>
         <li><strong>Registration:</strong> ${vehicle.registration}</li>
         <li><strong>Model:</strong> ${vehicle.model}</li>
         <li><strong>Door Status:</strong> ${vehicle.doorStatus || 'Unavailable'}</li>
         <li><strong>Battery Level:</strong> ${vehicle.batteryLevel || 'Unavailable'}</li>
         <li><strong>System Status:</strong> ${vehicle.systemStatus || 'Unavailable'}</li>
         <li><strong>Last Active Time:</strong> ${vehicle.lastActiveTime || 'Unavailable'}</li>
-        <li><strong>Last Known Location:</strong> ${vehicle.location 
-          ? `Lat: ${vehicle.location.latitude}, Lng: ${vehicle.location.longitude}` 
-          : 'Unavailable'}
-        </li>
       `;
+
+      if (vehicle.location) {
+        geocoder.geocode({ location: vehicle.location }, (results, status) => {
+          if (status === 'OK') {
+            if (results[0]) {
+              const address = results[0].formatted_address;
+              detailsList.innerHTML += `
+                <li><strong>Last Known Location:</strong> ${address}</li>
+              `;
+            } else {
+              detailsList.innerHTML += `
+                <li><strong>Last Known Location:</strong> No address found</li>
+              `;
+            }
+          } else {
+            console.error('Geocoder failed due to: ' + status);
+            detailsList.innerHTML += `
+              <li><strong>Last Known Location:</strong> ${vehicle.location.lat}, ${vehicle.location.lng}</li>
+            `;
+          }
+        });
+      } else {
+        detailsList.innerHTML += `
+          <li><strong>Last Known Location:</strong> Unavailable</li>
+        `;
+      }
 
       document.getElementById('lockButton').disabled = false;
       document.getElementById('unlockButton').disabled = false;
