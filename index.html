@@ -16,24 +16,58 @@
       font-family: Helvetica, Arial, sans-serif;
       background-color: #121212; /* Dark background */
       color: #fff;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
     }
 
     header {
       display: flex;
       align-items: center;
-      justify-content: space-between; /* Align logo left and dropdown right */
+      justify-content: flex-start; /* Align toggle button to the left */
       padding: 10px 20px; /* Increased padding for better spacing */
       background-color: #1e1e1e; /* Header background */
-      position: relative;
-      height: 70px; /* Increased height */
+      position: fixed;
+      top: 0;
+      width: 100%;
+      z-index: 1000;
     }
 
-    header img {
-      height: 50px; /* Increased logo size */
+    .toggle-container {
+      display: flex;
+      align-items: center;
     }
 
-    .dropdown-container {
-      /* Dropdown aligned to the right */
+    .toggle-btn {
+      background-color: #2c2c2c;
+      border: none;
+      border-radius: 20px;
+      padding: 8px 16px;
+      color: #fff;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .toggle-btn.active {
+      background-color: #276EF1; /* Uber blue for active state */
+    }
+
+    .toggle-btn:not(.active):hover {
+      background-color: #444444;
+    }
+
+    footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 20px;
+      background-color: #1e1e1e; /* Footer background */
+      margin-top: auto; /* Push footer to the bottom */
+    }
+
+    footer img {
+      height: 40px; /* Adjusted logo size */
     }
 
     .dropdown-container select {
@@ -51,37 +85,13 @@
       box-shadow: 0 0 5px #276EF1; /* Uber blue focus */
     }
 
-    .center-btn {
-      background-color: #276EF1; /* Uber blue */
-      border: none;
-      border-radius: 50%;
-      width: 26px; /* 65% of 40px */
-      height: 26px; /* 65% of 40px */
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3); /* Soft shadow with blur */
-      transition: box-shadow 0.3s ease;
-      margin-right: 10px; /* Space between locate button and dropdown */
-    }
-
-    .center-btn:hover {
-      box-shadow: 0 6px 8px rgba(0, 0, 0, 0.4); /* Enhanced shadow on hover */
-    }
-
-    .center-btn img {
-      width: 16px; /* Adjusted icon size */
-      height: 16px;
-    }
-
     .map-container {
-      padding: 20px 5px; /* 5px padding left and right */
-      position: relative;
+      padding: 80px 20px 20px 20px; /* Top padding accounts for fixed header */
+      flex: 1;
     }
 
     #map {
-      height: 50vh;
+      height: 60vh;
       width: 100%;
       border-radius: 10px;
     }
@@ -278,10 +288,6 @@
       .last-location {
         font-size: 0.9rem;
       }
-
-      .center-btn {
-        left: 60px; /* Adjust for smaller screens */
-      }
     }
   </style>
   <!-- Load Google Maps API with async, defer, and callback -->
@@ -293,23 +299,13 @@
 </head>
 <body>
   <header>
-    <img src="logo.png" alt="Logo">
-    <button id="centerMapBtn" class="center-btn" title="Center on Me">
-      <!-- Locate Icon (using SVG for better scalability) -->
-      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#fff" viewBox="0 0 24 24">
-        <path d="M12 8a4 4 0 100 8 4 4 0 000-8zm-1 10.93V20h2v-1.07a7.007 7.007 0 014.933-6.93A7.007 7.007 0 0112 18.93zM5.05 5.05a7 7 0 0110.9 0l1.41-1.41a9 9 0 10-12.72 0l1.41 1.41z"/>
-      </svg>
-    </button>
-    <div class="dropdown-container">
-      <select id="vehicleSelector">
-        <option value="">-- Loading Vehicles --</option>
-      </select>
+    <div class="toggle-container">
+      <button id="toggleButton" class="toggle-btn active">Cars</button>
     </div>
   </header>
 
   <div class="map-container">
     <div id="map"></div>
-    <!-- Center on Me Button moved to header -->
   </div>
 
   <div class="iframe-container active" id="alternativeContainer">
@@ -317,7 +313,7 @@
   </div>
 
   <div class="iframe-container" id="sketchfabContainer">
-    <iframe src="https://sketchfab.com/models/2c530666fa834f71b75f526f1bb1eb40/embed?autostart=1&camera=0&ui_animations=0&ui_infos=0&ui_stop=0&ui_inspector=0&ui_watermark_link=0&ui_watermark=0&ui_ar=0&ui_help=0&ui_settings=0&ui_vr=0&ui_fullscreen=0&ui_annotations=0" title="3D Model"></iframe>
+    <iframe src="https://sketchfab.com/models/32182bd458674ea6969f8890ada5883f/embed?autostart=1&camera=0&ui_animations=0&ui_infos=0&ui_stop=0&ui_inspector=0&ui_watermark_link=0&ui_watermark=0&ui_ar=0&ui_help=0&ui_settings=0&ui_vr=0&ui_fullscreen=0&ui_annotations=0" title="3D Model"></iframe>
   </div>
 
   <div class="details-section">
@@ -351,6 +347,15 @@
     </div>
   </div>
 
+  <footer>
+    <img src="logo.png" alt="Logo">
+    <div class="dropdown-container">
+      <select id="vehicleSelector">
+        <option value="">-- Select a Vehicle --</option>
+      </select>
+    </div>
+  </footer>
+
   <script>
     // Configuration
     const username = 'URBA00001'; // Replace with your username
@@ -358,14 +363,22 @@
     const auth = btoa(`${username}:${token}`);
     const baseUrl = 'https://fleetapi-hk.cartrack.com/rest';
 
+    // Google Maps Datasets API Configuration
+    const datasetsApiKey = 'YOUR_GOOGLE_MAPS_DATASETS_API_KEY'; // Replace with your Datasets API key
+    const stationsSheetId = '1phOurVx6NwUxtMeeZZM296PuNzDs5HHLWAH6FaUZ2JU'; // Google Sheets ID
+    const stationsRange = 'Sheet1!A:B'; // Adjust the range as per your sheet
+
     let map;
     let geocoder;
     let directionsService;
     let directionsRenderer;
     let userLocation = null;
-    let markers = {};
+    let carMarkers = {};
+    let stationMarkers = {};
     let selectedVehicle = null;
     let vehicles = [];
+    let stations = [];
+    let currentMarkerType = 'Cars'; // Default state
 
     // Initialize Google Map with custom styles and services
     function initMap() {
@@ -488,6 +501,10 @@
         // Browser doesn't support Geolocation
         handleLocationError(false, map.getCenter());
       }
+
+      // Fetch initial data
+      fetchVehicles();
+      fetchStations();
     }
 
     function handleLocationError(browserHasGeolocation, pos) {
@@ -596,9 +613,35 @@
       if (data && Array.isArray(data.data)) {
         vehicles = data.data;
         populateDropdown(vehicles);
-        await plotVehiclesOnMap(vehicles);
+        await plotCarsOnMap(vehicles);
       } else {
         console.error("Invalid vehicle data received.");
+      }
+    }
+
+    // Fetch Stations from Google Sheets via Datasets API
+    async function fetchStations() {
+      try {
+        const url = `https://maps.googleapis.com/maps/api/datasets/v1/datasets/YOUR_DATASET_ID/features?key=${datasetsApiKey}`;
+        const response = await fetch(url);
+        const data = await response.json();
+        console.log('Fetched Stations Data:', data); // Debugging Log
+
+        if (data.features && Array.isArray(data.features)) {
+          stations = data.features.map(feature => ({
+            id: feature.id,
+            name: feature.properties.name,
+            position: {
+              lat: feature.geometry.coordinates[1],
+              lng: feature.geometry.coordinates[0],
+            }
+          }));
+          // Stations will be plotted when the toggle is set to "Stations"
+        } else {
+          console.error("Invalid stations data received.");
+        }
+      } catch (error) {
+        console.error("Error fetching stations:", error);
       }
     }
 
@@ -623,13 +666,13 @@
       });
     }
 
-    // Plot Vehicles on Map
-    async function plotVehiclesOnMap(vehicles) {
+    // Plot Cars on Map
+    async function plotCarsOnMap(vehicles) {
       // Clear existing markers
-      for (let reg in markers) {
-        markers[reg].setMap(null);
+      for (let reg in carMarkers) {
+        carMarkers[reg].setMap(null);
       }
-      markers = {};
+      carMarkers = {};
 
       // Fetch status for all vehicles
       const statusResponse = await getCarsStatus(vehicles.map(v => v.registration));
@@ -656,7 +699,7 @@
               document.getElementById('vehicleSelector').value = vehicle.registration;
             });
 
-            markers[vehicle.registration] = marker;
+            carMarkers[vehicle.registration] = marker;
           } else {
             console.warn(`No location data for vehicle ${vehicle.registration}.`);
           }
@@ -664,6 +707,33 @@
       } else {
         console.error("Invalid status data received.");
       }
+    }
+
+    // Plot Stations on Map
+    function plotStationsOnMap(stations) {
+      // Clear existing station markers
+      for (let id in stationMarkers) {
+        stationMarkers[id].setMap(null);
+      }
+      stationMarkers = {};
+
+      stations.forEach(station => {
+        const marker = new google.maps.Marker({
+          position: station.position,
+          map,
+          title: station.name,
+          icon: {
+            url: "http://maps.google.com/mapfiles/ms/icons/green-dot.png"
+          }
+        });
+
+        marker.addListener('click', () => {
+          // Handle station marker click if needed
+          alert(`Station: ${station.name}`);
+        });
+
+        stationMarkers[station.id] = marker;
+      });
     }
 
     // Select Vehicle (from dropdown or marker)
@@ -685,6 +755,7 @@
         showSketchfab();
         plotRoute();
         illuminateMarker(selectedVehicle.registration);
+        applySketchfabTextures(selectedVehicle.registration);
         document.getElementById('routeToggle').style.display = 'block';
       }
     }
@@ -713,7 +784,7 @@
     // Illuminate Selected Marker
     function illuminateMarker(registration) {
       removeMarkerIllumination(); // Remove previous illumination
-      const marker = markers[registration];
+      const marker = carMarkers[registration];
       if (marker) {
         marker.setIcon({
           url: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png"
@@ -723,8 +794,8 @@
 
     // Remove illumination from all markers
     function removeMarkerIllumination() {
-      for (let reg in markers) {
-        markers[reg].setIcon({
+      for (let reg in carMarkers) {
+        carMarkers[reg].setIcon({
           url: "http://maps.google.com/mapfiles/ms/icons/red-dot.png"
         });
       }
@@ -884,6 +955,46 @@
       });
     }
 
+    // Toggle Button Functionality
+    const toggleButton = document.getElementById('toggleButton');
+    toggleButton.addEventListener('click', () => {
+      if (currentMarkerType === 'Cars') {
+        currentMarkerType = 'Stations';
+        toggleButton.textContent = 'Stations';
+        toggleButton.classList.remove('active');
+        toggleButton.classList.add('active'); // Maintain active class for styling
+        showStations();
+      } else {
+        currentMarkerType = 'Cars';
+        toggleButton.textContent = 'Cars';
+        toggleButton.classList.remove('active');
+        toggleButton.classList.add('active'); // Maintain active class for styling
+        showCars();
+      }
+    });
+
+    function showCars() {
+      // Hide station markers
+      for (let id in stationMarkers) {
+        stationMarkers[id].setMap(null);
+      }
+      // Show car markers
+      for (let reg in carMarkers) {
+        carMarkers[reg].setMap(map);
+      }
+    }
+
+    function showStations() {
+      // Hide car markers
+      for (let reg in carMarkers) {
+        carMarkers[reg].setMap(null);
+      }
+      // Show station markers
+      for (let id in stationMarkers) {
+        stationMarkers[id].setMap(map);
+      }
+    }
+
     // Vehicle Commands
     document.getElementById('lockButton').addEventListener('click', async () => {
       if (selectedVehicle) {
@@ -922,8 +1033,90 @@
     // Initialize map and fetch data on page load
     window.onload = () => {
       // initMap is now called via the callback parameter in the script tag
-      fetchVehicles();
+      // fetchVehicles(); // Already called in initMap
+      // fetchStations(); // Already called in initMap
     };
+
+    // Sketchfab Viewer API Integration
+    let sketchfabAPI;
+    let sketchfabViewer;
+
+    function initializeSketchfab() {
+      const iframe = document.getElementById('sketchfabContainer').querySelector('iframe');
+      sketchfabAPI = new Sketchfab('1.0.0', iframe);
+      sketchfabAPI.init('32182bd458674ea6969f8890ada5883f', {
+        success: function(api) {
+          sketchfabViewer = api;
+          sketchfabViewer.start();
+          sketchfabViewer.addEventListener('viewerready', function() {
+            console.log('Sketchfab model loaded.');
+          });
+        },
+        error: function() {
+          console.error('Sketchfab API error.');
+        }
+      });
+    }
+
+    // Apply Textures to Sketchfab Model Based on Vehicle Selection
+    function applySketchfabTextures(registration) {
+      if (!sketchfabViewer) {
+        console.error('Sketchfab Viewer API not initialized.');
+        return;
+      }
+
+      const textureMappings = {
+        "YV2570": {
+          "Plain_r1_g1_a1_texture_path": "re_16_Artboard_8.png",
+          "Plain_r0.576471_g0.301961_b0.00392158_a1_texture_path": "rerere_13_3617b_Copy.png"
+        },
+        "YV3617": {
+          "Plain_r1_g1_a1_texture_path": "re_17_Artboard_8_Copy.png",
+          "Plain_r0.576471_g0.301961_b0.00392158_a1_texture_path": "rerere_14_2570b_Copy.png"
+        },
+        "ZK2548": {
+          "Plain_r1_g1_a1_texture_path": "re_18_Artboard_8_Copy_2.png",
+          "Plain_r0.576471_g0.301961_b0.00392158_a1_texture_path": "rerere_15_2548b_Copy.png"
+        },
+        "YV4136": {
+          "Plain_r1_g1_a1_texture_path": "re_19_Artboard_8_Copy_3.png",
+          "Plain_r0.576471_g0.301961_b0.00392158_a1_texture_path": "rerere_11_4136b_Copy.png"
+        },
+        "ZK5419": {
+          "Plain_r0.576471_g0.301961_b0.00392158_a1_texture_path": "rerere_12_5419b_Copy.png"
+        }
+      };
+
+      const vehicleTextures = textureMappings[registration];
+      if (!vehicleTextures) {
+        console.warn(`No texture mappings found for vehicle ${registration}.`);
+        return;
+      }
+
+      // Apply each texture to the corresponding material
+      for (let material in vehicleTextures) {
+        const texturePath = vehicleTextures[material];
+        sketchfabViewer.setMaterialTexture(material, texturePath, {
+          scale: [1, 1],
+          rotation: 0,
+          offset: [0, 0],
+          opacity: 1
+        }, function(success, message) {
+          if (success) {
+            console.log(`Applied texture ${texturePath} to ${material}.`);
+          } else {
+            console.error(`Failed to apply texture ${texturePath} to ${material}: ${message}`);
+          }
+        });
+      }
+    }
+
+    // Initialize Sketchfab after the iframe has loaded
+    window.addEventListener('load', () => {
+      initializeSketchfab();
+    });
   </script>
+  <!-- Sketchfab Viewer API -->
+  <script src="https://static.sketchfab.com/api/sketchfab-viewer-1.0.0.js"></script>
 </body>
 </html>
