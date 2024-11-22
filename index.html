@@ -140,7 +140,7 @@
     .map-container {
       padding: 80px 20px 20px 20px; /* Top padding accounts for fixed header */
       flex: 1;
-      position: relative; /* To position the locator button */
+      position: relative; /* To position the locate button */
     }
 
     #map {
@@ -149,11 +149,11 @@
       border-radius: 10px;
     }
 
-    /* Locator Button Styling */
+    /* New Locate Button Styling */
     .locate-button {
       position: absolute;
-      top: 10px;
-      right: 10px;
+      bottom: 20px;
+      left: 20px;
       background-color: #fff;
       border: none;
       border-radius: 50%;
@@ -167,8 +167,7 @@
       z-index: 5;
     }
 
-    .locate-button svg {
-      fill: #000;
+    .locate-button img {
       width: 24px;
       height: 24px;
     }
@@ -437,7 +436,6 @@
   </script>
 
   <!-- Google Maps API -->
-  <!-- NOTE: Replace 'YOUR_GOOGLE_MAPS_API_KEY' with your actual API key -->
   <script
     src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA8rDrxBzMRlgbA7BQ2DoY31gEXzZ4Ours&libraries=places&language=zh-HK&callback=initMap"
     async
@@ -460,19 +458,17 @@
 
   <!-- Map Container -->
   <div class="map-container">
+    <!-- New Locate Button on Bottom Left -->
     <button class="locate-button" id="locateButton" title="Center on Me">
-      <!-- Locate Icon SVG -->
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
-        <path d="M0 0h24v24H0V0z" fill="none"/>
-        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.93 0-3.5-1.57-3.5-3.5S10.07 4.5 12 4.5 15.5 6.07 15.5 8 13.93 11.5 12 11.5z"/>
-      </svg>
+      <!-- Google's Default Locate Icon -->
+      <img src="https://maps.gstatic.com/mapfiles/api-3/images/spotlight-poi2.png" alt="Locate">
     </button>
     <div id="map"></div>
   </div>
 
   <!-- Sketchfab Embed Wrapper -->
   <div class="sketchfab-embed-wrapper" id="sketchfabContainer">
-    <iframe src="https://sketchfab.com/models/32182bd458674ea6969f8890ada5883f/embed?autostart=1&camera=0&ui_animations=0&ui_infos=0&ui_stop=0&ui_inspector=0&ui_watermark_link=0&ui_watermark=0&ui_ar=0&ui_help=0&ui_settings=0&ui_vr=0&ui_fullscreen=0&ui_annotations=0" title="3D Model"></iframe>
+    <iframe src="https://sketchfab.com/models/32182bd458674ea6969f8890ada5883f/embed?autostart=1&ui_watermark=0&ui_infos=0&ui_stop=0&ui_annotations=0" title="3D Model"></iframe>
   </div>
 
   <!-- Selected Info Container -->
@@ -540,10 +536,7 @@
     </div>
   </div>
 
-  <!-- Import Scripts -->
-  <!-- NOTE: Use separate script tags for module and non-module scripts -->
-
-  <!-- Non-module script for initMap and other global functions -->
+  <!-- Non-module Script for Global Functions -->
   <script>
     // Configuration
     const username = 'URBA00001'; // Replace with your username
@@ -553,8 +546,7 @@
 
     // Google Maps Datasets API Configuration
     const datasetsApiKey = '880316754524-m88cmb6dla3pf3i51p3ph26ecnv49ja7.apps.googleusercontent.com'; // Replace with your Datasets API key
-    const stationsSheetId = 'f5c242ae-3f30-4313-ab9a-e2df8af5b09d'; // Google Sheets ID
-    const stationsRange = '1!A1:E174'; // Adjust the range as per your sheet
+    const datasetId = 'f5c242ae-3f30-4313-ab9a-e2df8af5b09d'; // Dataset ID
 
     let map;
     let geocoder;
@@ -646,6 +638,8 @@
       fetchStations();
 
       // Add locate button above zoom controls
+      // Removed custom locate button to prevent CORS issues
+      // Using Google's default map tools and adding a new locate button
       addLocateButton();
     }
 
@@ -764,8 +758,7 @@
     // Fetch Stations from Google Sheets via Datasets API
     async function fetchStations() {
       try {
-        // Replace 'YOUR_DATASET_ID' with your actual Dataset ID linked to your Google Sheets
-        const url = `https://maps.googleapis.com/maps/api/datasets/v1/datasets/YOUR_DATASET_ID/features?key=${datasetsApiKey}`;
+        const url = `https://maps.googleapis.com/maps/api/datasets/v1/datasets/${datasetId}/features?key=${datasetsApiKey}`;
         const response = await fetch(url);
         const data = await response.json();
         console.log('Fetched Stations Data:', data); // Debugging Log
@@ -1013,17 +1006,21 @@
     // Show Sketchfab iframe and hide alternative
     function showSketchfab() {
       document.getElementById('sketchfabContainer').classList.add('active');
-      document.getElementById('alternativeContainer').classList.remove('active');
-      // Show Selected Info Container
       document.getElementById('selectedInfoContainer').style.display = 'block';
+      // Hide alternative iframe if any
+      if (document.getElementById('alternativeContainer')) {
+        document.getElementById('alternativeContainer').classList.remove('active');
+      }
     }
 
     // Hide Sketchfab iframe and show alternative
     function hideSketchfab() {
       document.getElementById('sketchfabContainer').classList.remove('active');
-      document.getElementById('alternativeContainer').classList.add('active');
-      // Hide Selected Info Container
       document.getElementById('selectedInfoContainer').style.display = 'none';
+      // Show alternative iframe if any
+      if (document.getElementById('alternativeContainer')) {
+        document.getElementById('alternativeContainer').classList.add('active');
+      }
     }
 
     // Plot Route from user to selected vehicle
@@ -1080,6 +1077,25 @@
       document.getElementById('routeInfo').style.display = 'none';
       document.getElementById('routeToggle').style.display = 'none';
       document.getElementById('routeDetails').style.display = 'none';
+    }
+
+    // Populate Route Details
+    function populateRouteDetails(route) {
+      const routeDetailsDiv = document.getElementById('routeDetails');
+      routeDetailsDiv.innerHTML = ''; // Clear previous details
+
+      route.legs[0].steps.forEach((step, index) => {
+        const stepDiv = document.createElement('div');
+        stepDiv.innerHTML = `<strong>Step ${index + 1}:</strong> ${step.instructions}`;
+        routeDetailsDiv.appendChild(stepDiv);
+      });
+
+      // Automatically zoom to annotation "1"
+      if (route.annotations && route.annotations.length > 0) {
+        // Assuming annotation "1" corresponds to the first annotation
+        // Modify as per your annotation data structure
+        // This part requires specific implementation based on your Sketchfab model
+      }
     }
 
     // Toggle Route Details
@@ -1241,7 +1257,21 @@
           sketchfabViewer.start();
           sketchfabViewer.addEventListener('viewerready', function() {
             console.log('Sketchfab model loaded.');
-            // Additional initialization if needed
+            // Remove watermark, titles, and other default interactions
+            sketchfabViewer.setOption('ui_watermark', false);
+            sketchfabViewer.setOption('ui_infos', false);
+            sketchfabViewer.setOption('ui_stop', false);
+            sketchfabViewer.setOption('ui_annotations', false);
+            // Auto-start the model
+            sketchfabViewer.play();
+            // Zoom into annotation "1" as starting view
+            // This requires knowing the annotation ID; assuming "1" is the ID
+            sketchfabViewer.setCameraLookAt({
+              camera: 0, // Default camera
+              target: { x: 0, y: 0, z: 0 }, // Replace with actual coordinates
+              distance: 1, // Adjust as needed
+              duration: 1 // 1 second transition
+            });
           });
         },
         error: function() {
@@ -1351,6 +1381,28 @@
         }
       });
     }
+
+    // Sketchfab Annotations Customization
+    // This requires knowledge of the specific annotations in your Sketchfab model
+    // The following is a placeholder and may need adjustments based on your model's annotations
+
+    function customizeSketchfabAnnotations() {
+      if (!sketchfabViewer) {
+        console.error('Sketchfab Viewer API not initialized.');
+        return;
+      }
+
+      sketchfabViewer.addEventListener('annotationclick', function(event) {
+        const annotation = event.detail;
+        // Customize the annotation appearance to white illuminating squares
+        sketchfabViewer.setAnnotationIcon(annotation.id, 'https://path-to-white-square-icon.png');
+        // Toggle title display on click
+        // This requires additional implementation based on Sketchfab's API capabilities
+      });
+    }
+
+    // Call customizeSketchfabAnnotations after viewer is ready
+    sketchfabViewer?.addEventListener('viewerready', customizeSketchfabAnnotations);
 
   </script>
 
