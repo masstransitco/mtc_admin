@@ -424,7 +424,7 @@
       }
     }
   </style>
-  
+
   <!-- Import Map -->
   <script type="importmap">
   {
@@ -435,17 +435,17 @@
     }
   }
   </script>
-  
+
   <!-- Google Maps API -->
   <script
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA8rDrxBzMRlgbA7BQ2DoY31gEXzZ4Ours&libraries=places&language=zh-HK&callback=initMap"
+    src="https://maps.googleapis.com/maps/api/js?key=880316754524-m88cmb6dla3pf3i51p3ph26ecnv49ja7.apps.googleusercontent.com&libraries=places&language=zh-HK&callback=initMap"
     async
     defer
   ></script>
-  
+
   <!-- Sketchfab Viewer API -->
   <script src="https://static.sketchfab.com/api/sketchfab-viewer-1.0.0.js"></script>
-  
+
 </head>
 <body>
   <!-- Header with Toggle Switch -->
@@ -1098,22 +1098,6 @@
       }
     });
 
-    // Populate Route Details
-    function populateRouteDetails(route) {
-      const routeDetailsDiv = document.getElementById('routeDetails');
-      routeDetailsDiv.innerHTML = ''; // Clear previous details
-
-      const steps = route.legs[0].steps;
-      steps.forEach((step, index) => {
-        const stepDiv = document.createElement('div');
-        stepDiv.style.marginBottom = '10px';
-        stepDiv.innerHTML = `
-          <strong>Step ${index + 1}:</strong> ${step.instructions}
-        `;
-        routeDetailsDiv.appendChild(stepDiv);
-      });
-    }
-
     // Toggle Switch Functionality
     const toggleCars = document.getElementById('toggleCars');
     const toggleStations = document.getElementById('toggleStations');
@@ -1248,6 +1232,8 @@
     // Initialize map and fetch data on page load
     window.onload = () => {
       // initMap is now called via the callback parameter in the script tag
+      // Ensure that initMap is globally accessible
+      window.initMap = initMap;
     };
 
     // Sketchfab Viewer API Integration
