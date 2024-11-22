@@ -437,6 +437,7 @@
   </script>
 
   <!-- Google Maps API -->
+  <!-- NOTE: Replace 'YOUR_GOOGLE_MAPS_API_KEY' with your actual API key -->
   <script
     src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA8rDrxBzMRlgbA7BQ2DoY31gEXzZ4Ours&libraries=places&language=zh-HK&callback=initMap"
     async
@@ -540,10 +541,10 @@
   </div>
 
   <!-- Import Scripts -->
-  <script type="module">
-    import { LumaSplatsThree } from "@lumaai/luma-web";
-    import { Color, DoubleSide, Mesh, MeshStandardMaterial, PlaneGeometry, Texture, Vector3 } from "three";
+  <!-- NOTE: Use separate script tags for module and non-module scripts -->
 
+  <!-- Non-module script for initMap and other global functions -->
+  <script>
     // Configuration
     const username = 'URBA00001'; // Replace with your username
     const token = 'fd58cd26fefc8c2b2ba1f7f52b33221a65f645790a43ff9b8da35db7da6e1f33'; // Replace with your token
@@ -920,8 +921,6 @@
       document.getElementById('routeInfo').style.display = 'none';
       // Hide route toggle
       document.getElementById('routeToggle').style.display = 'none';
-      // Show alternative iframe
-      document.getElementById('alternativeContainer').classList.add('active');
       // Remove illumination from all markers
       removeMarkerIllumination();
     }
@@ -1229,13 +1228,6 @@
       });
     }
 
-    // Initialize map and fetch data on page load
-    window.onload = () => {
-      // initMap is now called via the callback parameter in the script tag
-      // Ensure that initMap is globally accessible
-      window.initMap = initMap;
-    };
-
     // Sketchfab Viewer API Integration
     let sketchfabAPI;
     let sketchfabViewer;
@@ -1360,6 +1352,15 @@
       });
     }
 
+  </script>
+
+  <!-- Module script for Luma AI Splats (if needed) -->
+  <script type="module">
+    import { LumaSplatsThree } from "@lumaai/luma-web";
+    import { Color, DoubleSide, Mesh, MeshStandardMaterial, PlaneGeometry, Texture, Vector3 } from "three";
+
+    // Your module-specific code here
+    // Ensure that none of these interfere with global scope
   </script>
 
   <!-- Include html5-qrcode library for QR code scanning -->
