@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Fleet Management</title>
+  <title>Fleet Management Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     /* General Reset */
@@ -27,12 +27,12 @@
       align-items: center;
       justify-content: center; /* Center the toggle switch */
       padding: 10px 20px;
-      background-color: transparent; /* Changed to transparent */
+      background-color: transparent; /* Transparent background */
       position: fixed;
       top: 0;
       width: 100%;
       z-index: 1000;
-      height: 60px; /* Defined height for scroll adjustment */
+      height: 60px; /* Fixed height */
     }
 
     /* Toggle Switch Redesign */
@@ -127,7 +127,7 @@
     }
 
     .unlock-btn {
-      background-color: #09091A; /* Changed to #09091A */
+      background-color: #09091A; /* Dark background */
       color: #fff; /* White text */
     }
 
@@ -435,7 +435,7 @@
         padding: 80px 10px 10px 10px; /* Adjust padding for smaller screens */
       }
 
-      .iframe-container, .alternative-container, .sketchfab-embed-wrapper, .lumaai-embed-wrapper {
+      .sketchfab-embed-wrapper, .lumaai-embed-wrapper {
         height: 150px; /* Further reduce height on smaller screens */
       }
 
@@ -448,16 +448,121 @@
       }
     }
   </style>
-  <!-- Load Google Maps API with async, defer, and callback -->
+  
+  <!-- Import Map -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.157.0/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.157.0/examples/jsm/",
+      "@lumaai/luma-web": "https://unpkg.com/@lumaai/luma-web@0.2.0/dist/library/luma-web.module.js"
+    }
+  }
+  </script>
+  
+  <!-- Google Maps API -->
   <script
     src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA8rDrxBzMRlgbA7BQ2DoY31gEXzZ4Ours&libraries=places&language=zh-HK&callback=initMap"
     async
     defer
   ></script>
+  
   <!-- Sketchfab Viewer API -->
   <script src="https://static.sketchfab.com/api/sketchfab-viewer-1.0.0.js"></script>
-  <!-- Luma AI WebGL API -->
-  <!-- Replace with actual Luma AI WebGL API script URL if different -->
+  
+</head>
+<body>
+  <!-- Header with Toggle Switch -->
+  <header>
+    <div class="toggle-container">
+      <div class="toggle-base"></div>
+      <button class="toggle-button active" id="toggleCars">Cars</button>
+      <button class="toggle-button" id="toggleStations">Stations</button>
+    </div>
+  </header>
+
+  <!-- Map Container -->
+  <div class="map-container">
+    <button class="locate-button" id="locateButton" title="Center on Me">
+      <!-- Locate Icon SVG -->
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+        <path d="M0 0h24v24H0V0z" fill="none"/>
+        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.93 0-3.5-1.57-3.5-3.5S10.07 4.5 12 4.5 15.5 6.07 15.5 8 13.93 11.5 12 11.5z"/>
+      </svg>
+    </button>
+    <div id="map"></div>
+  </div>
+
+  <!-- Details Section -->
+  <div class="details-section">
+    <div class="details-container">
+      <div class="items-list">
+        <ul id="vehicleDetails">
+          <!-- Vehicle details will be populated here -->
+        </ul>
+      </div>
+      <div class="right-container">
+        <div class="last-location" id="lastLocation">
+          <strong>Last Known Location:</strong>
+          <div class="address">
+            <span class="english">Fetching address...</span>
+            <span class="chinese">獲取地址中...</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="route-info" id="routeInfo">
+      <span class="time" id="walkingTime">0</span>
+      <span class="unit">分钟</span>
+      <span class="route-details-toggle" id="routeToggle">View Route Details</span>
+    </div>
+    <div class="route-details" id="routeDetails">
+      <!-- Route details will be populated here -->
+    </div>
+    <div class="button-group">
+      <button class="choose-destination-btn" id="chooseDestinationButton">Choose Destination</button>
+      <button class="pay-as-you-go-btn" id="payAsYouGoButton">Pay-As-You-Go</button>
+    </div>
+  </div>
+
+  <!-- Footer with Dropdown and Lock/Unlock Buttons -->
+  <footer>
+    <div class="footer-left">
+      <div class="dropdown-container">
+        <select id="vehicleSelector">
+          <option value="">-- Select a Vehicle --</option>
+          <!-- Vehicle options will be populated here -->
+        </select>
+      </div>
+    </div>
+    <div class="lock-buttons">
+      <button class="lock-btn" id="lockButtonFooter">Lock</button>
+      <button class="unlock-btn" id="unlockButtonFooter">Unlock</button>
+    </div>
+  </footer>
+
+  <!-- Sketchfab Embed Wrapper -->
+  <div class="sketchfab-embed-wrapper" id="sketchfabContainer">
+    <iframe title="viewermodel" frameborder="0" allowfullscreen mozallowfullscreen="true" webkitallowfullscreen="true" allow="autoplay; fullscreen; xr-spatial-tracking" xr-spatial-tracking execution-while-out-of-viewport execution-while-not-rendered web-share src="https://sketchfab.com/models/32182bd458674ea6969f8890ada5883f/embed?autostart=1&annotations_visible=1&annotation=1&transparent=1&ui_animations=0&ui_infos=0&ui_stop=0&ui_inspector=0&ui_watermark_link=0&ui_watermark=0&ui_hint=0&ui_help=0&ui_settings=0&ui_vr=0&ui_fullscreen=0&ui_annotations=0"></iframe>
+  </div>
+
+  <!-- Luma AI Embed Wrapper -->
+  <div class="lumaai-embed-wrapper active" id="lumaaiContainer">
+    <!-- Luma AI WebGL Canvas -->
+    <canvas id="lumaaiCanvas" width="1280" height="400"></canvas>
+    <!-- 3D Text Overlay -->
+    <div class="lumaai-3dtext">Concordia Plaza</div>
+  </div>
+
+  <!-- QR Code Scanner Overlay -->
+  <div class="qr-scanner-overlay" id="qrScannerOverlay">
+    <div class="qr-scanner-container">
+      <button class="close-btn" id="closeQrScanner">&times;</button>
+      <div id="qr-reader" style="width:100%"></div>
+    </div>
+  </div>
+
+  <!-- Import Scripts -->
   <script type="module">
     import { LumaSplatsThree } from "@lumaai/luma-web";
     import { Color, DoubleSide, Mesh, MeshStandardMaterial, PlaneGeometry, Texture, Vector3 } from "three";
@@ -469,7 +574,7 @@
     const baseUrl = 'https://fleetapi-hk.cartrack.com/rest';
 
     // Google Maps Datasets API Configuration
-    const datasetsApiKey = 'YOUR_GOOGLE_MAPS_DATASETS_API_KEY'; // Replace with your Datasets API key
+    const datasetsApiKey = '880316754524-m88cmb6dla3pf3i51p3ph26ecnv49ja7.apps.googleusercontent.com'; // Replace with your Datasets API key
     const stationsSheetId = '1phOurVx6NwUxtMeeZZM296PuNzDs5HHLWAH6FaUZ2JU'; // Google Sheets ID
     const stationsRange = 'Sheet1!A:B'; // Adjust the range as per your sheet
 
@@ -497,7 +602,7 @@
         }
       });
 
-      // Custom Map Style (Maintained from previous setup)
+      // Custom Map Style
       const customMapStyle = [
         {
           "featureType": "all",
@@ -617,9 +722,6 @@
 
       // Add locate button above zoom controls
       addLocateButton();
-
-      // Initialize Luma AI
-      initializeLumaAI();
     }
 
     function handleLocationError(browserHasGeolocation, pos) {
@@ -895,7 +997,7 @@
       document.getElementById('routeInfo').style.display = 'none';
       // Hide route toggle
       document.getElementById('routeToggle').style.display = 'none';
-      // Show alternative iframe
+      // Show alternative iframe (if any)
       document.getElementById('alternativeContainer').classList.add('active');
       // Remove illumination from all markers
       removeMarkerIllumination();
@@ -1046,6 +1148,24 @@
       }
     }
 
+    // Populate Route Details
+    function populateRouteDetails(route) {
+      const routeDetails = document.getElementById('routeDetails');
+      routeDetails.innerHTML = ''; // Clear previous details
+
+      route.legs.forEach((leg, index) => {
+        const legDiv = document.createElement('div');
+        legDiv.innerHTML = `
+          <strong>Leg ${index + 1}:</strong>
+          <p>Start: ${leg.start_address}</p>
+          <p>End: ${leg.end_address}</p>
+          <p>Distance: ${leg.distance.text}</p>
+          <p>Duration: ${leg.duration.text}</p>
+        `;
+        routeDetails.appendChild(legDiv);
+      });
+    }
+
     // Clear Route
     function clearRoute() {
       directionsRenderer.set('directions', null);
@@ -1191,8 +1311,6 @@
     // Initialize map and fetch data on page load
     window.onload = () => {
       // initMap is now called via the callback parameter in the script tag
-      // fetchVehicles(); // Already called in initMap
-      // fetchStations(); // Already called in initMap
     };
 
     // Sketchfab Viewer API Integration
@@ -1208,18 +1326,7 @@
           sketchfabViewer.start();
           sketchfabViewer.addEventListener('viewerready', function() {
             console.log('Sketchfab model loaded.');
-            // Set initial view to Annotation 1
-            // Assuming Annotation 1 corresponds to a specific camera position
-            // You may need to adjust this based on your model's annotations
-            // Placeholder: Move camera to a predefined position
-            sketchfabViewer.getCameraLookAt(function(result, data) {
-              if (result) {
-                // Example: Set camera to specific coordinates (replace with actual)
-                // This requires knowing the camera parameters for Annotation 1
-                // You might need to retrieve them from your model or Sketchfab annotations
-                // For demonstration, we'll skip setting specific camera parameters
-              }
-            });
+            // Additional initialization if needed
           });
         },
         error: function() {
@@ -1357,7 +1464,7 @@
       canvas.width = 1024;
       canvas.height = 512;
 
-      // Clear white, 0 alpha
+      // Clear transparent
       context.fillStyle = 'rgba(255, 255, 255, 0)';
       context.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -1403,6 +1510,7 @@
       initializeLumaAI();
     });
   </script>
+  
   <!-- Include html5-qrcode library for QR code scanning -->
   <script src="https://unpkg.com/html5-qrcode"></script>
 </body>
