@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Fleet Management</title>
+  <title>Fleet Management Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     /* General Reset */
@@ -21,42 +21,63 @@
       min-height: 100vh;
     }
 
+    /* Header Styling */
     header {
       display: flex;
       align-items: center;
-      justify-content: flex-start; /* Align toggle button to the left */
-      padding: 10px 20px; /* Increased padding for better spacing */
+      justify-content: center; /* Center the toggle switch */
+      padding: 10px 20px;
       background-color: #1e1e1e; /* Header background */
       position: fixed;
       top: 0;
       width: 100%;
       z-index: 1000;
+      height: 60px; /* Fixed height */
     }
 
+    /* Toggle Switch Redesign */
     .toggle-container {
+      position: relative;
       display: flex;
       align-items: center;
+      gap: 10px;
     }
 
-    .toggle-btn {
+    .toggle-base {
+      position: absolute;
+      width: 200px;
+      height: 50px;
       background-color: #2c2c2c;
+      border-radius: 25px;
+      display: flex;
+      justify-content: space-between;
+      padding: 5px;
+      transition: background-color 0.4s;
+    }
+
+    .toggle-button {
+      width: 95px;
+      height: 40px;
+      background-color: transparent;
       border: none;
       border-radius: 20px;
-      padding: 8px 16px;
       color: #fff;
       font-size: 1rem;
       cursor: pointer;
-      transition: background-color 0.3s ease;
+      transition: background-color 0.4s;
+      position: relative;
+      z-index: 1;
     }
 
-    .toggle-btn.active {
-      background-color: #276EF1; /* Uber blue for active state */
+    .toggle-button.active {
+      background-color: #276EF1; /* Uber blue */
     }
 
-    .toggle-btn:not(.active):hover {
+    .toggle-button:not(.active):hover {
       background-color: #444444;
     }
 
+    /* Footer Styling */
     footer {
       display: flex;
       align-items: center;
@@ -85,9 +106,41 @@
       box-shadow: 0 0 5px #276EF1; /* Uber blue focus */
     }
 
+    /* Lock and Unlock Buttons in Footer */
+    .lock-buttons {
+      display: flex;
+      gap: 10px;
+    }
+
+    .lock-btn, .unlock-btn {
+      padding: 10px 20px;
+      font-size: 1rem;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: opacity 0.3s ease;
+      display: none; /* Hidden by default */
+    }
+
+    .lock-btn {
+      background-color: #C7C7CC; /* Uber gray */
+      color: #000; /* Black text */
+    }
+
+    .unlock-btn {
+      background-color: #09091A; /* Dark background */
+      color: #fff; /* White text */
+    }
+
+    .unlock-btn:hover, .lock-btn:hover {
+      opacity: 0.8;
+    }
+
+    /* Map Container Adjustments */
     .map-container {
       padding: 80px 20px 20px 20px; /* Top padding accounts for fixed header */
       flex: 1;
+      position: relative; /* To position the locator button */
     }
 
     #map {
@@ -96,22 +149,67 @@
       border-radius: 10px;
     }
 
-    .iframe-container, .alternative-container {
-      width: calc(100% - 10px); /* Full width with 5px padding on both sides */
-      max-width: 1280px;
-      height: 216px; /* Reduced to 30% of 720px */
-      margin: 20px auto;
-      display: none; /* Hidden by default */
-      border-radius: 10px;
-      overflow: hidden;
+    /* Locator Button Styling */
+    .locate-button {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background-color: #fff;
+      border: none;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 5;
     }
 
-    .iframe-container iframe, .alternative-container iframe {
+    .locate-button svg {
+      fill: #000;
+      width: 24px;
+      height: 24px;
+    }
+
+    /* Sketchfab Embed Wrapper */
+    .sketchfab-embed-wrapper {
+      width: 100%;
+      height: 216px;
+      margin: 20px auto;
+      border: 2px solid #3A3A48;
+      border-radius: 10px;
+      overflow: hidden;
+      padding: 10px;
+      background-color: transparent;
+      display: none; /* Hidden by default */
+    }
+
+    .sketchfab-embed-wrapper.active {
+      display: block;
+    }
+
+    .sketchfab-embed-wrapper iframe {
       width: 100%;
       height: 100%;
       border: none;
+      background: transparent;
     }
 
+    /* Selected Info Container */
+    .selected-info-container {
+      width: 100%;
+      max-width: 1280px;
+      margin: 20px auto;
+      padding: 20px;
+      background-color: #1e1e1e;
+      border-radius: 10px;
+      display: none; /* Hidden by default */
+      color: #fff;
+    }
+
+    /* Details Section Styling */
     .details-section {
       padding: 20px;
       background-color: #1e1e1e;
@@ -183,6 +281,7 @@
       display: flex;
       gap: 10px;
       margin-top: 20px;
+      display: none; /* Hidden by default */
     }
 
     .button-group button {
@@ -194,17 +293,7 @@
       transition: opacity 0.3s ease;
     }
 
-    .lock-btn {
-      background-color: #C7C7CC; /* Uber gray */
-      color: #000; /* Black text */
-    }
-
-    .unlock-btn {
-      background-color: #276EF1; /* Uber blue */
-      color: #fff; /* White text */
-    }
-
-    .choose-destination-btn {
+    .choose-destination-btn, .pay-as-you-go-btn {
       background-color: #276EF1; /* Uber blue */
       color: #fff;
       padding: 10px 20px;
@@ -214,17 +303,17 @@
       border-radius: 5px;
       cursor: pointer;
       width: 100%;
+      transition: opacity 0.3s ease;
+      display: none; /* Hidden by default */
     }
 
     .pay-as-you-go-btn {
       background-color: #C7C7CC; /* Uber gray */
       color: #000;
-      padding: 10px 20px;
-      font-size: 1rem;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      width: 100%;
+    }
+
+    .choose-destination-btn:hover, .pay-as-you-go-btn:hover, .lock-btn:hover, .unlock-btn:hover {
+      opacity: 0.8;
     }
 
     .route-details {
@@ -238,15 +327,6 @@
       font-size: 0.9rem;
     }
 
-    /* Show elements when active */
-    .iframe-container.active, .alternative-container.active {
-      display: block;
-    }
-
-    .route-info.active {
-      display: flex;
-    }
-
     /* Last Known Location Styles */
     .last-location {
       width: 100%;
@@ -258,6 +338,7 @@
       display: flex;
       flex-direction: column;
       gap: 5px;
+      display: none; /* Hidden by default */
     }
 
     .last-location .address {
@@ -275,6 +356,43 @@
       font-weight: bold;
     }
 
+    /* QR Code Scanner Fullscreen Overlay */
+    .qr-scanner-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.9);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 2000;
+      display: none; /* Hidden by default */
+    }
+
+    .qr-scanner-container {
+      position: relative;
+      width: 80%;
+      max-width: 400px;
+      background-color: #1e1e1e;
+      padding: 20px;
+      border-radius: 10px;
+    }
+
+    .qr-scanner-container button.close-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background-color: #C7C7CC;
+      border: none;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+
     /* Responsive Design */
     @media (max-width: 768px) {
       .details-container {
@@ -288,34 +406,82 @@
       .last-location {
         font-size: 0.9rem;
       }
+
+      .map-container {
+        padding: 80px 10px 10px 10px; /* Adjust padding for smaller screens */
+      }
+
+      .sketchfab-embed-wrapper, .selected-info-container {
+        height: 150px; /* Further reduce height on smaller screens */
+      }
+
+      .toggle-base {
+        width: 160px;
+      }
+
+      .toggle-button {
+        width: 75px;
+      }
     }
   </style>
-  <!-- Load Google Maps API with async, defer, and callback -->
+  
+  <!-- Import Map -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.157.0/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.157.0/examples/jsm/",
+      "@lumaai/luma-web": "https://unpkg.com/@lumaai/luma-web@0.2.0/dist/library/luma-web.module.js"
+    }
+  }
+  </script>
+  
+  <!-- Google Maps API -->
   <script
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA8rDrxBzMRlgbA7BQ2DoY31gEXzZ4Ours&language=zh-HK&callback=initMap"
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA8rDrxBzMRlgbA7BQ2DoY31gEXzZ4Ours&libraries=places&language=zh-HK&callback=initMap"
     async
     defer
   ></script>
+  
+  <!-- Sketchfab Viewer API -->
+  <script src="https://static.sketchfab.com/api/sketchfab-viewer-1.0.0.js"></script>
+  
 </head>
 <body>
+  <!-- Header with Toggle Switch -->
   <header>
     <div class="toggle-container">
-      <button id="toggleButton" class="toggle-btn active">Cars</button>
+      <div class="toggle-base"></div>
+      <button class="toggle-button active" id="toggleCars">Cars</button>
+      <button class="toggle-button" id="toggleStations">Stations</button>
     </div>
   </header>
 
+  <!-- Map Container -->
   <div class="map-container">
+    <button class="locate-button" id="locateButton" title="Center on Me">
+      <!-- Locate Icon SVG -->
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+        <path d="M0 0h24v24H0V0z" fill="none"/>
+        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.93 0-3.5-1.57-3.5-3.5S10.07 4.5 12 4.5 15.5 6.07 15.5 8 13.93 11.5 12 11.5z"/>
+      </svg>
+    </button>
     <div id="map"></div>
   </div>
 
-  <div class="iframe-container active" id="alternativeContainer">
-    <iframe src="https://poly.cam/capture/7F309A54-AAEF-459D-8A2F-198E70A58D40/embed" title="GSViewer"></iframe>
-  </div>
-
-  <div class="iframe-container" id="sketchfabContainer">
+  <!-- Sketchfab Embed Wrapper -->
+  <div class="sketchfab-embed-wrapper" id="sketchfabContainer">
     <iframe src="https://sketchfab.com/models/32182bd458674ea6969f8890ada5883f/embed?autostart=1&camera=0&ui_animations=0&ui_infos=0&ui_stop=0&ui_inspector=0&ui_watermark_link=0&ui_watermark=0&ui_ar=0&ui_help=0&ui_settings=0&ui_vr=0&ui_fullscreen=0&ui_annotations=0" title="3D Model"></iframe>
   </div>
 
+  <!-- Selected Info Container -->
+  <div class="selected-info-container" id="selectedInfoContainer">
+    <h2>Selected Vehicle Information</h2>
+    <p>Details about the selected vehicle will be displayed here.</p>
+    <!-- Additional details can be added here -->
+  </div>
+
+  <!-- Details Section -->
   <div class="details-section">
     <div class="details-container">
       <div class="items-list">
@@ -340,13 +506,18 @@
       </div>
     </div>
     <div class="last-location" id="lastLocation">
-      <!-- Address will be populated here -->
+      <strong>Last Known Location:</strong>
+      <div class="address">
+        <span class="english">Fetching address...</span>
+        <span class="chinese">獲取地址中...</span>
+      </div>
     </div>
     <div class="route-details" id="routeDetails">
       <!-- Turn-by-turn directions will be populated here -->
     </div>
   </div>
 
+  <!-- Footer with Dropdown and Lock/Unlock Buttons -->
   <footer>
     <img src="logo.png" alt="Logo">
     <div class="dropdown-container">
@@ -354,17 +525,33 @@
         <option value="">-- Select a Vehicle --</option>
       </select>
     </div>
+    <div class="lock-buttons">
+      <button class="lock-btn" id="lockButtonFooter">Lock</button>
+      <button class="unlock-btn" id="unlockButtonFooter">Unlock</button>
+    </div>
   </footer>
 
-  <script>
+  <!-- QR Code Scanner Overlay -->
+  <div class="qr-scanner-overlay" id="qrScannerOverlay">
+    <div class="qr-scanner-container">
+      <button class="close-btn" id="closeQrScanner">&times;</button>
+      <div id="qr-reader" style="width:100%"></div>
+    </div>
+  </div>
+
+  <!-- Import Scripts -->
+  <script type="module">
+    import { LumaSplatsThree } from "@lumaai/luma-web";
+    import { Color, DoubleSide, Mesh, MeshStandardMaterial, PlaneGeometry, Texture, Vector3 } from "three";
+
     // Configuration
     const username = 'URBA00001'; // Replace with your username
-    const token = 'fd58cd26fefc8c2b2ba1f7f52b33221a65f645790a43ff9b8da35db7da6e1f33';       // Replace with your token
+    const token = 'fd58cd26fefc8c2b2ba1f7f52b33221a65f645790a43ff9b8da35db7da6e1f33'; // Replace with your token
     const auth = btoa(`${username}:${token}`);
     const baseUrl = 'https://fleetapi-hk.cartrack.com/rest';
 
     // Google Maps Datasets API Configuration
-    const datasetsApiKey = 'YOUR_GOOGLE_MAPS_DATASETS_API_KEY'; // Replace with your Datasets API key
+    const datasetsApiKey = '880316754524-m88cmb6dla3pf3i51p3ph26ecnv49ja7.apps.googleusercontent.com'; // Replace with your Datasets API key
     const stationsSheetId = '1phOurVx6NwUxtMeeZZM296PuNzDs5HHLWAH6FaUZ2JU'; // Google Sheets ID
     const stationsRange = 'Sheet1!A:B'; // Adjust the range as per your sheet
 
@@ -392,70 +579,17 @@
         }
       });
 
-      // Custom Map Style (Maintained from previous setup)
+      // Custom Map Style (Minimal gray and white canvas with land outlines and roads)
       const customMapStyle = [
-        {
-          "featureType": "all",
-          "elementType": "labels",
-          "stylers": [
-            { "visibility": "off" }
-          ]
-        },
-        {
-          "featureType": "administrative.locality",
-          "elementType": "labels",
-          "stylers": [
-            { "visibility": "on" }
-          ]
-        },
-        {
-          "featureType": "administrative.locality",
-          "elementType": "labels.text.fill",
-          "stylers": [
-            { "color": "#ffffff" }
-          ]
-        },
-        {
-          "featureType": "landscape",
-          "elementType": "geometry",
-          "stylers": [
-            { "visibility": "on" },
-            { "color": "#2c2c2c" }
-          ]
-        },
-        {
-          "featureType": "poi",
-          "stylers": [
-            { "visibility": "off" }
-          ]
-        },
-        {
-          "featureType": "road",
-          "elementType": "labels",
-          "stylers": [
-            { "visibility": "off" }
-          ]
-        },
-        {
-          "featureType": "road",
-          "elementType": "geometry",
-          "stylers": [
-            { "color": "#444444" }
-          ]
-        },
-        {
-          "featureType": "transit",
-          "stylers": [
-            { "visibility": "off" }
-          ]
-        },
-        {
-          "featureType": "water",
-          "stylers": [
-            { "color": "#000000" },
-            { "visibility": "on" }
-          ]
-        }
+        { elementType: 'labels', stylers: [{ visibility: 'off' }] },
+        { featureType: 'administrative', elementType: 'geometry', stylers: [{ color: '#444444' }] },
+        { featureType: 'landscape', elementType: 'geometry', stylers: [{ color: '#2c2c2c' }] },
+        { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#ffffff' }] },
+        { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#ffffff' }] },
+        { featureType: 'road.arterial', elementType: 'geometry', stylers: [{ color: '#ffffff' }] },
+        { featureType: 'road.local', elementType: 'geometry', stylers: [{ color: '#ffffff' }] },
+        { featureType: 'transit', elementType: 'geometry', stylers: [{ color: '#444444' }] },
+        { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#000000' }] },
       ];
 
       map = new google.maps.Map(document.getElementById("map"), {
@@ -465,6 +599,10 @@
         mapTypeId: 'terrain',
         streetViewControl: false,
         mapTypeControl: false,
+        zoomControl: true,
+        zoomControlOptions: {
+          position: google.maps.ControlPosition.RIGHT_BOTTOM
+        }
       });
 
       directionsRenderer.setMap(map);
@@ -505,6 +643,9 @@
       // Fetch initial data
       fetchVehicles();
       fetchStations();
+
+      // Add locate button above zoom controls
+      addLocateButton();
     }
 
     function handleLocationError(browserHasGeolocation, pos) {
@@ -622,6 +763,7 @@
     // Fetch Stations from Google Sheets via Datasets API
     async function fetchStations() {
       try {
+        // Replace 'YOUR_DATASET_ID' with your actual Dataset ID linked to your Google Sheets
         const url = `https://maps.googleapis.com/maps/api/datasets/v1/datasets/YOUR_DATASET_ID/features?key=${datasetsApiKey}`;
         const response = await fetch(url);
         const data = await response.json();
@@ -756,7 +898,6 @@
         plotRoute();
         illuminateMarker(selectedVehicle.registration);
         applySketchfabTextures(selectedVehicle.registration);
-        document.getElementById('routeToggle').style.display = 'block';
       }
     }
 
@@ -766,15 +907,19 @@
       clearDetails();
       hideSketchfab();
       clearRoute();
-      document.getElementById('lockButton').disabled = true;
-      document.getElementById('unlockButton').disabled = true;
-      document.getElementById('chooseDestinationButton').disabled = true;
-      document.getElementById('payAsYouGoButton').disabled = true;
-      // Hide Route Info and Details
+      // Hide lock and unlock buttons
+      document.getElementById('lockButtonFooter').style.display = 'none';
+      document.getElementById('unlockButtonFooter').style.display = 'none';
+      // Hide choose destination and pay-as-you-go buttons
+      document.getElementById('chooseDestinationButton').style.display = 'none';
+      document.getElementById('payAsYouGoButton').style.display = 'none';
+      // Hide last location
+      document.getElementById('lastLocation').style.display = 'none';
+      // Hide route info
       document.getElementById('routeInfo').classList.remove('active');
       document.getElementById('routeInfo').style.display = 'none';
+      // Hide route toggle
       document.getElementById('routeToggle').style.display = 'none';
-      document.getElementById('routeDetails').style.display = 'none';
       // Show alternative iframe
       document.getElementById('alternativeContainer').classList.add('active');
       // Remove illumination from all markers
@@ -805,14 +950,21 @@
     function displayVehicleDetails(vehicle) {
       const detailsList = document.getElementById('vehicleDetails');
       detailsList.innerHTML = `
-        <li><strong>Last Known Location:</strong></li>
-        <li class="address">
-          <span class="english">Fetching address...</span>
-          <span class="chinese">獲取地址中...</span>
-        </li>
         <li><strong>Registration:</strong> ${vehicle.registration}</li>
         <li><strong>Model:</strong> ${vehicle.model}</li>
+        <li><strong>Status:</strong> ${vehicle.systemStatus ? 'Active' : 'Inactive'}</li>
       `;
+
+      // Show last known location
+      const lastLocationDiv = document.getElementById('lastLocation');
+      lastLocationDiv.innerHTML = `
+        <strong>Last Known Location:</strong>
+        <div class="address">
+          <span class="english">Fetching address...</span>
+          <span class="chinese">獲取地址中...</span>
+        </div>
+      `;
+      lastLocationDiv.style.display = 'flex';
 
       // Convert lat/lng to address
       if (vehicle.location) {
@@ -821,51 +973,58 @@
             if (results[0]) {
               const address = results[0].formatted_address;
               const chineseAddress = results[0].address_components.find(comp => comp.types.includes('administrative_area_level_1'))?.long_name || 'N/A';
-              const addressElements = detailsList.querySelectorAll('.address span');
+              const addressElements = lastLocationDiv.querySelectorAll('.address span');
               addressElements[0].textContent = address;
               addressElements[1].textContent = chineseAddress;
             } else {
-              const addressElements = detailsList.querySelectorAll('.address span');
+              const addressElements = lastLocationDiv.querySelectorAll('.address span');
               addressElements[0].textContent = 'No address found';
               addressElements[1].textContent = '無地址找到';
             }
           } else {
             console.error('Geocoder failed due to: ' + status);
-            const addressElements = detailsList.querySelectorAll('.address span');
+            const addressElements = lastLocationDiv.querySelectorAll('.address span');
             addressElements[0].textContent = `${vehicle.location.lat}, ${vehicle.location.lng}`;
             addressElements[1].textContent = '無地址找到';
           }
         });
       } else {
-        const addressElements = detailsList.querySelectorAll('.address span');
+        const addressElements = lastLocationDiv.querySelectorAll('.address span');
         addressElements[0].textContent = 'Unavailable';
         addressElements[1].textContent = '不可用';
       }
 
-      // Enable buttons
-      document.getElementById('lockButton').disabled = false;
-      document.getElementById('unlockButton').disabled = false;
-      document.getElementById('chooseDestinationButton').disabled = false;
-      document.getElementById('payAsYouGoButton').disabled = false;
+      // Show lock and unlock buttons in footer
+      document.getElementById('lockButtonFooter').style.display = 'inline-block';
+      document.getElementById('unlockButtonFooter').style.display = 'inline-block';
+      // Show choose destination and pay-as-you-go buttons
+      document.getElementById('chooseDestinationButton').style.display = 'block';
+      document.getElementById('payAsYouGoButton').style.display = 'block';
     }
 
     // Clear Vehicle Details
     function clearDetails() {
       const detailsList = document.getElementById('vehicleDetails');
       detailsList.innerHTML = `<li>Select a vehicle to see details here...</li>`;
-      document.getElementById('lastLocation').innerHTML = '';
+      const lastLocationDiv = document.getElementById('lastLocation');
+      lastLocationDiv.innerHTML = '';
+      lastLocationDiv.style.display = 'none';
     }
 
     // Show Sketchfab iframe and hide alternative
     function showSketchfab() {
       document.getElementById('sketchfabContainer').classList.add('active');
       document.getElementById('alternativeContainer').classList.remove('active');
+      // Show Selected Info Container
+      document.getElementById('selectedInfoContainer').style.display = 'block';
     }
 
     // Hide Sketchfab iframe and show alternative
     function hideSketchfab() {
       document.getElementById('sketchfabContainer').classList.remove('active');
       document.getElementById('alternativeContainer').classList.add('active');
+      // Hide Selected Info Container
+      document.getElementById('selectedInfoContainer').style.display = 'none';
     }
 
     // Plot Route from user to selected vehicle
@@ -955,21 +1114,27 @@
       });
     }
 
-    // Toggle Button Functionality
-    const toggleButton = document.getElementById('toggleButton');
-    toggleButton.addEventListener('click', () => {
-      if (currentMarkerType === 'Cars') {
-        currentMarkerType = 'Stations';
-        toggleButton.textContent = 'Stations';
-        toggleButton.classList.remove('active');
-        toggleButton.classList.add('active'); // Maintain active class for styling
-        showStations();
-      } else {
+    // Toggle Switch Functionality
+    const toggleCars = document.getElementById('toggleCars');
+    const toggleStations = document.getElementById('toggleStations');
+
+    toggleCars.addEventListener('click', () => {
+      if (currentMarkerType !== 'Cars') {
         currentMarkerType = 'Cars';
-        toggleButton.textContent = 'Cars';
-        toggleButton.classList.remove('active');
-        toggleButton.classList.add('active'); // Maintain active class for styling
+        toggleCars.classList.add('active');
+        toggleStations.classList.remove('active');
         showCars();
+        clearRoute();
+      }
+    });
+
+    toggleStations.addEventListener('click', () => {
+      if (currentMarkerType !== 'Stations') {
+        currentMarkerType = 'Stations';
+        toggleStations.classList.add('active');
+        toggleCars.classList.remove('active');
+        showStations();
+        clearRoute();
       }
     });
 
@@ -995,8 +1160,8 @@
       }
     }
 
-    // Vehicle Commands
-    document.getElementById('lockButton').addEventListener('click', async () => {
+    // Vehicle Commands in Footer
+    document.getElementById('lockButtonFooter').addEventListener('click', async () => {
       if (selectedVehicle) {
         await commandCar(selectedVehicle.registration, 'LOCK');
         // Optionally refresh vehicle details
@@ -1008,33 +1173,81 @@
       }
     });
 
-    document.getElementById('unlockButton').addEventListener('click', async () => {
+    document.getElementById('unlockButtonFooter').addEventListener('click', async () => {
       if (selectedVehicle) {
-        await commandCar(selectedVehicle.registration, 'UNLOCK');
-        // Optionally refresh vehicle details
-        const status = await getCarStatus(selectedVehicle.registration);
-        if (status) {
-          selectedVehicle.doorStatus = status.door_status;
-          displayVehicleDetails(selectedVehicle);
+        const confirmUnlock = confirm(`You’re about to unlock the doors for the vehicle with plate number: ${selectedVehicle.registration}. Do you want to proceed?`);
+        if (confirmUnlock) {
+          await commandCar(selectedVehicle.registration, 'UNLOCK');
+          // Optionally refresh vehicle details
+          const status = await getCarStatus(selectedVehicle.registration);
+          if (status) {
+            selectedVehicle.doorStatus = status.door_status;
+            displayVehicleDetails(selectedVehicle);
+          }
         }
       }
     });
 
     // Choose Destination Button (Placeholder)
     document.getElementById('chooseDestinationButton').addEventListener('click', () => {
-      alert('Choose Destination functionality not implemented yet.');
+      openQrScanner();
     });
 
     // Pay-As-You-Go Button (Placeholder)
     document.getElementById('payAsYouGoButton').addEventListener('click', () => {
-      alert('Pay-As-You-Go functionality not implemented yet.');
+      openQrScanner();
     });
+
+    // QR Code Scanner Functions (Using html5-qrcode library)
+    function openQrScanner() {
+      document.getElementById('qrScannerOverlay').style.display = 'flex';
+      initializeQrScanner();
+    }
+
+    function closeQrScanner() {
+      document.getElementById('qrScannerOverlay').style.display = 'none';
+      // Stop the QR scanner if necessary
+      if (window.qrScannerInstance) {
+        window.qrScannerInstance.stop().then(ignore => {
+          window.qrScannerInstance.clear();
+          window.qrScannerInstance = null;
+        }).catch(err => {
+          console.error('Failed to stop QR scanner:', err);
+        });
+      }
+    }
+
+    document.getElementById('closeQrScanner').addEventListener('click', closeQrScanner);
+
+    // Initialize QR Scanner (Using html5-qrcode library)
+    function initializeQrScanner() {
+      if (window.qrScannerInstance) {
+        window.qrScannerInstance.clear();
+      }
+      const html5QrCode = new Html5Qrcode("qr-reader");
+      window.qrScannerInstance = html5QrCode;
+
+      const qrCodeSuccessCallback = (decodedText, decodedResult) => {
+        // Handle the scanned QR code data
+        alert(`QR Code Scanned: ${decodedText}`);
+        closeQrScanner();
+      };
+
+      const config = { fps: 10, qrbox: 250 };
+
+      // Start scanning
+      html5QrCode.start(
+        { facingMode: "environment" },
+        config,
+        qrCodeSuccessCallback
+      ).catch(err => {
+        console.error(`Unable to start scanning, error: ${err}`);
+      });
+    }
 
     // Initialize map and fetch data on page load
     window.onload = () => {
       // initMap is now called via the callback parameter in the script tag
-      // fetchVehicles(); // Already called in initMap
-      // fetchStations(); // Already called in initMap
     };
 
     // Sketchfab Viewer API Integration
@@ -1050,6 +1263,7 @@
           sketchfabViewer.start();
           sketchfabViewer.addEventListener('viewerready', function() {
             console.log('Sketchfab model loaded.');
+            // Additional initialization if needed
           });
         },
         error: function() {
@@ -1115,11 +1329,54 @@
     window.addEventListener('load', () => {
       initializeSketchfab();
     });
+
+    // Add Locate Button Functionality
+    function addLocateButton() {
+      const locateButton = document.getElementById('locateButton');
+      locateButton.addEventListener('click', () => {
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(
+            (position) => {
+              userLocation = {
+                lat: position.coords.latitude,
+                lng: position.coords.longitude,
+              };
+              map.setCenter(userLocation);
+              map.setZoom(14);
+
+              // Clear selected markers and routes
+              deselectVehicle();
+              clearRoute();
+
+              // Add or move user location marker
+              const userLocationMarker = new google.maps.Marker({
+                position: userLocation,
+                map: map,
+                title: 'Your Location',
+                icon: {
+                  path: google.maps.SymbolPath.CIRCLE,
+                  scale: 8,
+                  fillColor: '#4285F4',
+                  fillOpacity: 1,
+                  strokeColor: 'white',
+                  strokeWeight: 2,
+                },
+              });
+            },
+            () => {
+              alert('Error: The Geolocation service failed.');
+            }
+          );
+        } else {
+          // Browser doesn't support Geolocation
+          alert("Error: Your browser doesn't support geolocation.");
+        }
+      });
+    }
+
   </script>
-  <!-- Sketchfab Viewer API -->
-  <script src="https://static.sketchfab.com/api/sketchfab-viewer-1.0.0.js"></script>
+
+  <!-- Include html5-qrcode library for QR code scanning -->
+  <script src="https://unpkg.com/html5-qrcode"></script>
 </body>
 </html>
-
-
-
