@@ -21,10 +21,11 @@
       min-height: 100vh;
     }
 
+    /* Header Styling */
     header {
       display: flex;
       align-items: center;
-      justify-content: flex-start; /* Align toggle switch to the left */
+      justify-content: center; /* Center the toggle switch */
       padding: 10px 20px;
       background-color: transparent; /* Changed to transparent */
       position: fixed;
@@ -34,64 +35,42 @@
       height: 60px; /* Defined height for scroll adjustment */
     }
 
-    /* Toggle Switch Styling */
+    /* Toggle Switch Redesign */
     .toggle-container {
+      position: relative;
       display: flex;
       align-items: center;
       gap: 10px;
     }
 
-    .toggle-switch {
-      position: relative;
-      width: 60px;
-      height: 34px;
-    }
-
-    .toggle-switch input {
-      opacity: 0;
-      width: 0;
-      height: 0;
-    }
-
-    .slider {
+    .toggle-base {
       position: absolute;
-      cursor: pointer;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
+      width: 200px;
+      height: 50px;
       background-color: #2c2c2c;
-      transition: 0.4s;
-      border-radius: 34px;
-    }
-
-    .slider:before {
-      position: absolute;
-      content: "";
-      height: 26px;
-      width: 26px;
-      left: 4px;
-      bottom: 4px;
-      background-color: white;
-      transition: 0.4s;
-      border-radius: 50%;
-    }
-
-    input:checked + .slider {
-      background-color: #276EF1;
-    }
-
-    input:checked + .slider:before {
-      transform: translateX(26px);
-    }
-
-    /* Labels for Toggle Switch */
-    .toggle-labels {
+      border-radius: 25px;
       display: flex;
       justify-content: space-between;
-      width: 60px;
-      font-size: 0.8rem;
-      user-select: none;
+      padding: 5px;
+      transition: background-color 0.4s;
+    }
+
+    .toggle-button {
+      width: 95px;
+      height: 40px;
+      background-color: transparent;
+      border: none;
+      border-radius: 20px;
+      color: #fff;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background-color 0.4s;
+      position: relative;
+      z-index: 1;
+    }
+
+    .toggle-button.active {
+      background-color: #276EF1; /* Uber blue */
     }
 
     /* Footer Styling */
@@ -104,8 +83,11 @@
       margin-top: auto; /* Push footer to the bottom */
     }
 
-    footer img {
-      height: 40px; /* Adjusted logo size */
+    /* Remove Logo and Align Dropdown to Left */
+    .footer-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
 
     .dropdown-container select {
@@ -136,6 +118,7 @@
       border-radius: 5px;
       cursor: pointer;
       transition: opacity 0.3s ease;
+      display: none; /* Hidden by default */
     }
 
     .lock-btn {
@@ -156,8 +139,9 @@
       opacity: 0.8;
     }
 
+    /* Map Container Adjustments */
     .map-container {
-      padding: 80px 20px 20px 20px; /* Top padding accounts for fixed header */
+      padding: 80px 20px 10px 20px; /* Top padding accounts for fixed header */
       flex: 1;
       transition: margin 0.3s ease;
     }
@@ -166,8 +150,10 @@
       height: 60vh;
       width: 100%;
       border-radius: 10px;
+      background-color: #2c2c2c; /* Placeholder color while loading */
     }
 
+    /* Iframe Containers */
     .iframe-container, .alternative-container {
       width: calc(100% - 10px); /* Full width with 5px padding on both sides */
       max-width: 1280px;
@@ -189,8 +175,10 @@
       width: 100%;
       height: 100%;
       border: none;
+      background: transparent; /* Transparent background */
     }
 
+    /* Details Section Styling */
     .details-section {
       padding: 20px;
       background-color: #1e1e1e;
@@ -262,6 +250,7 @@
       display: flex;
       gap: 10px;
       margin-top: 20px;
+      display: none; /* Hidden by default */
     }
 
     .button-group button {
@@ -271,16 +260,6 @@
       border-radius: 5px;
       cursor: pointer;
       transition: opacity 0.3s ease;
-    }
-
-    .lock-btn {
-      background-color: #C7C7CC; /* Uber gray */
-      color: #000; /* Black text */
-    }
-
-    .unlock-btn {
-      background-color: #09091A; /* Changed to #09091A */
-      color: #fff; /* White text */
     }
 
     .choose-destination-btn, .pay-as-you-go-btn {
@@ -294,6 +273,7 @@
       cursor: pointer;
       width: 100%;
       transition: opacity 0.3s ease;
+      display: none; /* Hidden by default */
     }
 
     .pay-as-you-go-btn {
@@ -327,6 +307,7 @@
       display: flex;
       flex-direction: column;
       gap: 5px;
+      display: none; /* Hidden by default */
     }
 
     .last-location .address {
@@ -402,6 +383,14 @@
       .iframe-container, .alternative-container {
         height: 150px; /* Further reduce height on smaller screens */
       }
+
+      .toggle-base {
+        width: 160px;
+      }
+
+      .toggle-button {
+        width: 75px;
+      }
     }
   </style>
   <!-- Load Google Maps API with async, defer, and callback -->
@@ -416,14 +405,9 @@
 <body>
   <header>
     <div class="toggle-container">
-      <label class="toggle-switch">
-        <input type="checkbox" id="toggleSwitch">
-        <span class="slider"></span>
-      </label>
-      <div class="toggle-labels">
-        <span id="toggleLabel1">Cars</span>
-        <span id="toggleLabel2">Stations</span>
-      </div>
+      <div class="toggle-base"></div>
+      <button class="toggle-button active" id="toggleCars">Cars</button>
+      <button class="toggle-button" id="toggleStations">Stations</button>
     </div>
   </header>
 
@@ -452,18 +436,23 @@
         <div class="route-details-toggle" id="routeToggle" style="display: none;">
           <span id="toggleText">Route details</span>
         </div>
-        <div class="button-group">
-          <button id="lockButton" class="lock-btn" disabled>Lock</button>
-          <button id="unlockButton" class="unlock-btn" disabled>Unlock</button>
-        </div>
       </div>
       <div class="right-container">
-        <button id="chooseDestinationButton" class="choose-destination-btn" disabled>Choose Destination</button>
-        <button id="payAsYouGoButton" class="pay-as-you-go-btn" disabled>Pay-As-You-Go</button>
+        <button id="chooseDestinationButton" class="choose-destination-btn">Choose Destination</button>
+        <button id="payAsYouGoButton" class="pay-as-you-go-btn">Pay-As-You-Go</button>
       </div>
     </div>
     <div class="last-location" id="lastLocation">
-      <!-- Dynamic Content -->
+      <strong>Station:</strong>
+      <div class="address">
+        <span class="english">Fetching address...</span>
+        <span class="chinese">獲取地址中...</span>
+      </div>
+      <strong>Registration:</strong> 
+      <span id="registrationInfo"></span>
+      <strong>Model:</strong> 
+      <span id="modelInfo"></span>
+      <strong>Status:</strong> Parked and Available ✅
     </div>
     <div class="route-details" id="routeDetails">
       <!-- Turn-by-turn directions will be populated here -->
@@ -471,15 +460,16 @@
   </div>
 
   <footer>
-    <img src="logo.png" alt="Logo">
-    <div class="dropdown-container">
-      <select id="vehicleSelector">
-        <option value="">-- Select a Vehicle --</option>
-      </select>
+    <div class="footer-left">
+      <div class="dropdown-container">
+        <select id="vehicleSelector">
+          <option value="">-- Select a Vehicle --</option>
+        </select>
+      </div>
     </div>
     <div class="lock-buttons">
-      <button id="lockButtonFooter" class="lock-btn" disabled>Lock</button>
-      <button id="unlockButtonFooter" class="unlock-btn" disabled>Unlock</button>
+      <button id="lockButtonFooter" class="lock-btn">Lock</button>
+      <button id="unlockButtonFooter" class="unlock-btn">Unlock</button>
     </div>
   </footer>
 
@@ -896,7 +886,6 @@
         plotRoute();
         illuminateMarker(selectedVehicle.registration);
         applySketchfabTextures(selectedVehicle.registration);
-        document.getElementById('routeToggle').style.display = 'block';
       }
     }
 
@@ -906,15 +895,19 @@
       clearDetails();
       hideSketchfab();
       clearRoute();
-      document.getElementById('lockButtonFooter').disabled = true;
-      document.getElementById('unlockButtonFooter').disabled = true;
-      document.getElementById('chooseDestinationButton').disabled = true;
-      document.getElementById('payAsYouGoButton').disabled = true;
-      // Hide Route Info and Details
+      // Hide lock and unlock buttons
+      document.getElementById('lockButtonFooter').style.display = 'none';
+      document.getElementById('unlockButtonFooter').style.display = 'none';
+      // Hide choose destination and pay-as-you-go buttons
+      document.getElementById('chooseDestinationButton').style.display = 'none';
+      document.getElementById('payAsYouGoButton').style.display = 'none';
+      // Hide last location
+      document.getElementById('lastLocation').style.display = 'none';
+      // Hide route info
       document.getElementById('routeInfo').classList.remove('active');
       document.getElementById('routeInfo').style.display = 'none';
+      // Hide route toggle
       document.getElementById('routeToggle').style.display = 'none';
-      document.getElementById('routeDetails').style.display = 'none';
       // Show alternative iframe
       document.getElementById('alternativeContainer').classList.add('active');
       // Remove illumination from all markers
@@ -950,8 +943,8 @@
           <span class="english">Fetching address...</span>
           <span class="chinese">獲取地址中...</span>
         </li>
-        <li><strong>Registration:</strong> ${vehicle.registration}</li>
-        <li><strong>Model:</strong> ${vehicle.model}</li>
+        <li><strong>Registration:</strong> <span id="registrationInfo">${vehicle.registration}</span></li>
+        <li><strong>Model:</strong> <span id="modelInfo">${vehicle.model}</span></li>
         <li><strong>Status:</strong> Parked and Available ✅</li>
       `;
 
@@ -983,18 +976,21 @@
         addressElements[1].textContent = '不可用';
       }
 
-      // Enable buttons in footer
-      document.getElementById('lockButtonFooter').disabled = false;
-      document.getElementById('unlockButtonFooter').disabled = false;
-      document.getElementById('chooseDestinationButton').disabled = false;
-      document.getElementById('payAsYouGoButton').disabled = false;
+      // Show lock and unlock buttons in footer
+      document.getElementById('lockButtonFooter').style.display = 'inline-block';
+      document.getElementById('unlockButtonFooter').style.display = 'inline-block';
+      // Show choose destination and pay-as-you-go buttons
+      document.getElementById('chooseDestinationButton').style.display = 'block';
+      document.getElementById('payAsYouGoButton').style.display = 'block';
+      // Show last location
+      document.getElementById('lastLocation').style.display = 'flex';
     }
 
     // Clear Vehicle Details
     function clearDetails() {
       const detailsList = document.getElementById('vehicleDetails');
       detailsList.innerHTML = ``; // Removed default text
-      document.getElementById('lastLocation').innerHTML = '';
+      document.getElementById('lastLocation').style.display = 'none';
     }
 
     // Show Sketchfab iframe and hide alternative
@@ -1073,21 +1069,27 @@
     }
 
     // Toggle Switch Functionality
-    const toggleSwitch = document.getElementById('toggleSwitch');
-    toggleSwitch.addEventListener('change', () => {
-      if (toggleSwitch.checked) {
-        currentMarkerType = 'Stations';
-        document.getElementById('toggleLabel1').textContent = 'Stations';
-        document.getElementById('toggleLabel2').textContent = 'Cars';
-        showStations();
-      } else {
+    const toggleCars = document.getElementById('toggleCars');
+    const toggleStations = document.getElementById('toggleStations');
+
+    toggleCars.addEventListener('click', () => {
+      if (currentMarkerType !== 'Cars') {
         currentMarkerType = 'Cars';
-        document.getElementById('toggleLabel1').textContent = 'Cars';
-        document.getElementById('toggleLabel2').textContent = 'Stations';
+        toggleCars.classList.add('active');
+        toggleStations.classList.remove('active');
         showCars();
+        clearRoute();
       }
-      // Clear any existing pedestrian routes
-      clearRoute();
+    });
+
+    toggleStations.addEventListener('click', () => {
+      if (currentMarkerType !== 'Stations') {
+        currentMarkerType = 'Stations';
+        toggleStations.classList.add('active');
+        toggleCars.classList.remove('active');
+        showStations();
+        clearRoute();
+      }
     });
 
     function showCars() {
@@ -1110,248 +1112,6 @@
       for (let id in stationMarkers) {
         stationMarkers[id].setMap(map);
       }
-    }
-
-    // Vehicle Commands in Footer
-    document.getElementById('lockButtonFooter').addEventListener('click', async () => {
-      if (selectedVehicle) {
-        await commandCar(selectedVehicle.registration, 'LOCK');
-        // Optionally refresh vehicle details
-        const status = await getCarStatus(selectedVehicle.registration);
-        if (status) {
-          selectedVehicle.doorStatus = status.door_status;
-          displayVehicleDetails(selectedVehicle);
-        }
-      }
-    });
-
-    document.getElementById('unlockButtonFooter').addEventListener('click', async () => {
-      if (selectedVehicle) {
-        const confirmUnlock = confirm(`You’re about to unlock the doors for the vehicle with plate number: ${selectedVehicle.registration}. Do you want to proceed?`);
-        if (confirmUnlock) {
-          await commandCar(selectedVehicle.registration, 'UNLOCK');
-          // Optionally refresh vehicle details
-          const status = await getCarStatus(selectedVehicle.registration);
-          if (status) {
-            selectedVehicle.doorStatus = status.door_status;
-            displayVehicleDetails(selectedVehicle);
-          }
-        }
-      }
-    });
-
-    // Choose Destination Button (Placeholder)
-    document.getElementById('chooseDestinationButton').addEventListener('click', () => {
-      openQrScanner();
-    });
-
-    // Pay-As-You-Go Button (Placeholder)
-    document.getElementById('payAsYouGoButton').addEventListener('click', () => {
-      openQrScanner();
-    });
-
-    // QR Code Scanner Functions
-    function openQrScanner() {
-      document.getElementById('qrScannerOverlay').style.display = 'flex';
-      initializeQrScanner();
-    }
-
-    function closeQrScanner() {
-      document.getElementById('qrScannerOverlay').style.display = 'none';
-      // Stop the QR scanner if necessary
-      if (window.qrScannerInstance) {
-        window.qrScannerInstance.stop();
-      }
-    }
-
-    document.getElementById('closeQrScanner').addEventListener('click', closeQrScanner);
-
-    // Initialize QR Scanner (Using html5-qrcode library)
-    function initializeQrScanner() {
-      if (window.qrScannerInstance) {
-        window.qrScannerInstance.clear();
-      }
-      const html5QrCode = new Html5Qrcode("qr-reader");
-      window.qrScannerInstance = html5QrCode;
-
-      const qrCodeSuccessCallback = (decodedText, decodedResult) => {
-        // Handle the scanned QR code data
-        alert(`QR Code Scanned: ${decodedText}`);
-        closeQrScanner();
-      };
-
-      const config = { fps: 10, qrbox: 250 };
-
-      // Start scanning
-      html5QrCode.start(
-        { facingMode: "environment" },
-        config,
-        qrCodeSuccessCallback
-      ).catch(err => {
-        console.error(`Unable to start scanning, error: ${err}`);
-      });
-    }
-
-    // Initialize map and fetch data on page load
-    window.onload = () => {
-      // initMap is now called via the callback parameter in the script tag
-      // fetchVehicles(); // Already called in initMap
-      // fetchStations(); // Already called in initMap
-    };
-
-    // Sketchfab Viewer API Integration
-    let sketchfabAPI;
-    let sketchfabViewer;
-
-    function initializeSketchfab() {
-      const iframe = document.getElementById('sketchfabContainer').querySelector('iframe');
-      sketchfabAPI = new Sketchfab('1.0.0', iframe);
-      sketchfabAPI.init('32182bd458674ea6969f8890ada5883f', {
-        success: function(api) {
-          sketchfabViewer = api;
-          sketchfabViewer.start();
-          sketchfabViewer.addEventListener('viewerready', function() {
-            console.log('Sketchfab model loaded.');
-            // Set initial view to Annotation 1
-            sketchfabViewer.getCameraLookAt(function(result, data) {
-              if (result) {
-                // Adjust camera to Annotation 1 coordinates if available
-                // This requires knowing the coordinates or annotations setup in the model
-              }
-            });
-          });
-        },
-        error: function() {
-          console.error('Sketchfab API error.');
-        }
-      });
-    }
-
-    // Apply Textures to Sketchfab Model Based on Vehicle Selection
-    function applySketchfabTextures(registration) {
-      if (!sketchfabViewer) {
-        console.error('Sketchfab Viewer API not initialized.');
-        return;
-      }
-
-      const textureMappings = {
-        "YV2570": {
-          "Plain_r1_g1_a1_texture_path": "re_16_Artboard_8.png",
-          "Plain_r0.576471_g0.301961_b0.00392158_a1_texture_path": "rerere_13_3617b_Copy.png"
-        },
-        "YV3617": {
-          "Plain_r1_g1_a1_texture_path": "re_17_Artboard_8_Copy.png",
-          "Plain_r0.576471_g0.301961_b0.00392158_a1_texture_path": "rerere_14_2570b_Copy.png"
-        },
-        "ZK2548": {
-          "Plain_r1_g1_a1_texture_path": "re_18_Artboard_8_Copy_2.png",
-          "Plain_r0.576471_g0.301961_b0.00392158_a1_texture_path": "rerere_15_2548b_Copy.png"
-        },
-        "YV4136": {
-          "Plain_r1_g1_a1_texture_path": "re_19_Artboard_8_Copy_3.png",
-          "Plain_r0.576471_g0.301961_b0.00392158_a1_texture_path": "rerere_11_4136b_Copy.png"
-        },
-        "ZK5419": {
-          "Plain_r0.576471_g0.301961_b0.00392158_a1_texture_path": "rerere_12_5419b_Copy.png"
-        }
-      };
-
-      const vehicleTextures = textureMappings[registration];
-      if (!vehicleTextures) {
-        console.warn(`No texture mappings found for vehicle ${registration}.`);
-        return;
-      }
-
-      // Apply each texture to the corresponding material
-      for (let material in vehicleTextures) {
-        const texturePath = vehicleTextures[material];
-        sketchfabViewer.setMaterialTexture(material, texturePath, {
-          scale: [1, 1],
-          rotation: 0,
-          offset: [0, 0],
-          opacity: 1
-        }, function(success, message) {
-          if (success) {
-            console.log(`Applied texture ${texturePath} to ${material}.`);
-          } else {
-            console.error(`Failed to apply texture ${texturePath} to ${material}: ${message}`);
-          }
-        });
-      }
-    }
-
-    // Initialize Sketchfab after the iframe has loaded
-    window.addEventListener('load', () => {
-      initializeSketchfab();
-    });
-
-    // Add Default Locate and Compass Icons to Map Corners
-    function addMapControls() {
-      // Locate Control
-      const locateControlDiv = document.createElement('div');
-      const locateControl = document.createElement('button');
-      locateControl.style.backgroundColor = '#fff';
-      locateControl.style.border = 'none';
-      locateControl.style.outline = 'none';
-      locateControl.style.width = '40px';
-      locateControl.style.height = '40px';
-      locateControl.style.borderRadius = '3px';
-      locateControl.style.boxShadow = '0 2px 6px rgba(0,0,0,0.3)';
-      locateControl.style.cursor = 'pointer';
-      locateControl.style.margin = '10px';
-      locateControl.style.padding = '0';
-      locateControl.title = 'Center on Me';
-
-      // Add Locate Icon (Compass)
-      locateControl.innerHTML = `
-        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#000000">
-          <path d="M0 0h24v24H0V0z" fill="none"/>
-          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.93 0-3.5-1.57-3.5-3.5S10.07 4.5 12 4.5 15.5 6.07 15.5 8 13.93 11.5 12 11.5z"/>
-        </svg>
-      `;
-
-      locateControlDiv.appendChild(locateControl);
-      map.controls[google.maps.ControlPosition.TOP_LEFT].push(locateControlDiv);
-
-      locateControl.addEventListener('click', () => {
-        if (userLocation) {
-          map.setCenter(userLocation);
-          map.setZoom(14);
-        } else {
-          alert('User location is unavailable.');
-        }
-      });
-
-      // Compass Control (Example: Reset Orientation)
-      const compassControlDiv = document.createElement('div');
-      const compassControl = document.createElement('button');
-      compassControl.style.backgroundColor = '#fff';
-      compassControl.style.border = 'none';
-      compassControl.style.outline = 'none';
-      compassControl.style.width = '40px';
-      compassControl.style.height = '40px';
-      compassControl.style.borderRadius = '3px';
-      compassControl.style.boxShadow = '0 2px 6px rgba(0,0,0,0.3)';
-      compassControl.style.cursor = 'pointer';
-      compassControl.style.margin = '10px';
-      compassControl.style.padding = '0';
-      compassControl.title = 'Reset Orientation';
-
-      // Add Compass Icon
-      compassControl.innerHTML = `
-        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#000000">
-          <path d="M0 0h24v24H0V0z" fill="none"/>
-          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.93 0-3.5-1.57-3.5-3.5S10.07 4.5 12 4.5 15.5 6.07 15.5 8 13.93 11.5 12 11.5z"/>
-          <path d="M0 0h24v24H0V0z" fill="none"/>
-        </svg>
-      `;
-
-      compassControlDiv.appendChild(compassControl);
-      map.controls[google.maps.ControlPosition.TOP_LEFT].push(compassControlDiv);
-
-      compassControl.addEventListener('click', () => {
-        map.setTilt(45); // Example action: Change tilt
-      });
     }
 
     // Vehicle Commands in Footer
@@ -1543,6 +1303,75 @@
     window.addEventListener('load', () => {
       initializeSketchfab();
     });
+
+    // Add Default Locate and Compass Icons to Map Corners
+    function addMapControls() {
+      // Locate Control
+      const locateControlDiv = document.createElement('div');
+      const locateControl = document.createElement('button');
+      locateControl.style.backgroundColor = '#fff';
+      locateControl.style.border = 'none';
+      locateControl.style.outline = 'none';
+      locateControl.style.width = '40px';
+      locateControl.style.height = '40px';
+      locateControl.style.borderRadius = '3px';
+      locateControl.style.boxShadow = '0 2px 6px rgba(0,0,0,0.3)';
+      locateControl.style.cursor = 'pointer';
+      locateControl.style.margin = '10px';
+      locateControl.style.padding = '0';
+      locateControl.title = 'Center on Me';
+
+      // Add Locate Icon (Compass)
+      locateControl.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#000000">
+          <path d="M0 0h24v24H0V0z" fill="none"/>
+          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.93 0-3.5-1.57-3.5-3.5S10.07 4.5 12 4.5 15.5 6.07 15.5 8 13.93 11.5 12 11.5z"/>
+        </svg>
+      `;
+
+      locateControlDiv.appendChild(locateControl);
+      map.controls[google.maps.ControlPosition.TOP_LEFT].push(locateControlDiv);
+
+      locateControl.addEventListener('click', () => {
+        if (userLocation) {
+          map.setCenter(userLocation);
+          map.setZoom(14);
+        } else {
+          alert('User location is unavailable.');
+        }
+      });
+
+      // Compass Control (Example: Reset Orientation)
+      const compassControlDiv = document.createElement('div');
+      const compassControl = document.createElement('button');
+      compassControl.style.backgroundColor = '#fff';
+      compassControl.style.border = 'none';
+      compassControl.style.outline = 'none';
+      compassControl.style.width = '40px';
+      compassControl.style.height = '40px';
+      compassControl.style.borderRadius = '3px';
+      compassControl.style.boxShadow = '0 2px 6px rgba(0,0,0,0.3)';
+      compassControl.style.cursor = 'pointer';
+      compassControl.style.margin = '10px';
+      compassControl.style.padding = '0';
+      compassControl.title = 'Reset Orientation';
+
+      // Add Compass Icon
+      compassControl.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#000000">
+          <path d="M0 0h24v24H0V0z" fill="none"/>
+          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.93 0-3.5-1.57-3.5-3.5S10.07 4.5 12 4.5 15.5 6.07 15.5 8 13.93 11.5 12 11.5z"/>
+          <path d="M0 0h24v24H0V0z" fill="none"/>
+        </svg>
+      `;
+
+      compassControlDiv.appendChild(compassControl);
+      map.controls[google.maps.ControlPosition.TOP_LEFT].push(compassControlDiv);
+
+      compassControl.addEventListener('click', () => {
+        map.setTilt(45); // Example action: Change tilt
+      });
+    }
   </script>
   <!-- Include html5-qrcode library for QR code scanning -->
   <script src="https://unpkg.com/html5-qrcode"></script>
