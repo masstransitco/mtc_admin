@@ -144,6 +144,7 @@
       padding: 80px 20px 10px 20px; /* Top padding accounts for fixed header */
       flex: 1;
       transition: margin 0.3s ease;
+      position: relative;
     }
 
     #map {
@@ -153,29 +154,83 @@
       background-color: #2c2c2c; /* Placeholder color while loading */
     }
 
-    /* Iframe Containers */
-    .iframe-container, .alternative-container {
-      width: calc(100% - 10px); /* Full width with 5px padding on both sides */
-      max-width: 1280px;
-      height: 216px; /* Reduced to 30% of 720px */
-      margin: 20px auto;
-      display: none; /* Hidden by default */
-      border-radius: 10px;
-      overflow: hidden;
-      border: 2px solid #3A3A48; /* Added 2px border */
-      padding: 10px; /* Increased left and right padding slightly */
-      background-color: transparent; /* Transparent background */
+    /* Locate Button Styling */
+    .locate-button {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background-color: #fff;
+      border: none;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 5;
     }
 
-    .iframe-container.active, .alternative-container.active {
+    .locate-button svg {
+      fill: #000;
+      width: 24px;
+      height: 24px;
+    }
+
+    /* Sketchfab Embed Wrapper */
+    .sketchfab-embed-wrapper {
+      width: calc(100% - 10px);
+      max-width: 1280px;
+      height: 216px;
+      margin: 20px auto;
+      border: 2px solid #3A3A48;
+      border-radius: 10px;
+      overflow: hidden;
+      padding: 10px;
+      background-color: transparent;
+      display: none; /* Hidden by default */
+    }
+
+    .sketchfab-embed-wrapper.active {
       display: block;
     }
 
-    .iframe-container iframe, .alternative-container iframe {
+    .sketchfab-embed-wrapper iframe {
       width: 100%;
       height: 100%;
       border: none;
-      background: transparent; /* Transparent background */
+      background: transparent;
+    }
+
+    /* Luma AI Embed Wrapper */
+    .lumaai-embed-wrapper {
+      width: calc(100% - 10px);
+      max-width: 1280px;
+      height: 400px;
+      margin: 20px auto;
+      border: 2px solid #3A3A48;
+      border-radius: 10px;
+      overflow: hidden;
+      padding: 10px;
+      background-color: transparent;
+      display: none; /* Hidden by default */
+    }
+
+    .lumaai-embed-wrapper.active {
+      display: block;
+    }
+
+    /* 3D Text Styling */
+    .lumaai-3dtext {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: #fff;
+      font-size: 2rem;
+      pointer-events: none;
+      text-shadow: 0 0 10px #276EF1;
     }
 
     /* Details Section Styling */
@@ -380,7 +435,7 @@
         padding: 80px 10px 10px 10px; /* Adjust padding for smaller screens */
       }
 
-      .iframe-container, .alternative-container {
+      .iframe-container, .alternative-container, .sketchfab-embed-wrapper, .lumaai-embed-wrapper {
         height: 150px; /* Further reduce height on smaller screens */
       }
 
@@ -401,87 +456,12 @@
   ></script>
   <!-- Sketchfab Viewer API -->
   <script src="https://static.sketchfab.com/api/sketchfab-viewer-1.0.0.js"></script>
-</head>
-<body>
-  <header>
-    <div class="toggle-container">
-      <div class="toggle-base"></div>
-      <button class="toggle-button active" id="toggleCars">Cars</button>
-      <button class="toggle-button" id="toggleStations">Stations</button>
-    </div>
-  </header>
+  <!-- Luma AI WebGL API -->
+  <!-- Replace with actual Luma AI WebGL API script URL if different -->
+  <script type="module">
+    import { LumaSplatsThree } from "@lumaai/luma-web";
+    import { Color, DoubleSide, Mesh, MeshStandardMaterial, PlaneGeometry, Texture, Vector3 } from "three";
 
-  <div class="map-container">
-    <div id="map"></div>
-  </div>
-
-  <div class="iframe-container active" id="alternativeContainer">
-    <iframe src="https://poly.cam/capture/7F309A54-AAEF-459D-8A2F-198E70A58D40/embed" title="GSViewer"></iframe>
-  </div>
-
-  <div class="iframe-container" id="sketchfabContainer">
-    <iframe src="https://sketchfab.com/models/32182bd458674ea6969f8890ada5883f/embed?autostart=1&ui_controls=0&ui_watermark=0&ui_fullscreen=0&ui_navigation=0&ui_annotations=0&background=0" title="3D Model"></iframe>
-  </div>
-
-  <div class="details-section">
-    <div class="details-container">
-      <div class="items-list">
-        <ul id="vehicleDetails">
-          <!-- Dynamic Content -->
-        </ul>
-        <div class="route-info" id="routeInfo">
-          <span class="time" id="walkingTime">0</span>
-          <span class="unit">分钟</span>
-        </div>
-        <div class="route-details-toggle" id="routeToggle" style="display: none;">
-          <span id="toggleText">Route details</span>
-        </div>
-      </div>
-      <div class="right-container">
-        <button id="chooseDestinationButton" class="choose-destination-btn">Choose Destination</button>
-        <button id="payAsYouGoButton" class="pay-as-you-go-btn">Pay-As-You-Go</button>
-      </div>
-    </div>
-    <div class="last-location" id="lastLocation">
-      <strong>Station:</strong>
-      <div class="address">
-        <span class="english">Fetching address...</span>
-        <span class="chinese">獲取地址中...</span>
-      </div>
-      <strong>Registration:</strong> 
-      <span id="registrationInfo"></span>
-      <strong>Model:</strong> 
-      <span id="modelInfo"></span>
-      <strong>Status:</strong> Parked and Available ✅
-    </div>
-    <div class="route-details" id="routeDetails">
-      <!-- Turn-by-turn directions will be populated here -->
-    </div>
-  </div>
-
-  <footer>
-    <div class="footer-left">
-      <div class="dropdown-container">
-        <select id="vehicleSelector">
-          <option value="">-- Select a Vehicle --</option>
-        </select>
-      </div>
-    </div>
-    <div class="lock-buttons">
-      <button id="lockButtonFooter" class="lock-btn">Lock</button>
-      <button id="unlockButtonFooter" class="unlock-btn">Unlock</button>
-    </div>
-  </footer>
-
-  <!-- QR Code Scanner Overlay -->
-  <div class="qr-scanner-overlay" id="qrScannerOverlay">
-    <div class="qr-scanner-container">
-      <button class="close-btn" id="closeQrScanner">&times;</button>
-      <div id="qr-reader" style="width:100%"></div>
-    </div>
-  </div>
-
-  <script>
     // Configuration
     const username = 'URBA00001'; // Replace with your username
     const token = 'fd58cd26fefc8c2b2ba1f7f52b33221a65f645790a43ff9b8da35db7da6e1f33';       // Replace with your token
@@ -590,6 +570,10 @@
         mapTypeId: 'terrain',
         streetViewControl: false,
         mapTypeControl: false,
+        zoomControl: true,
+        zoomControlOptions: {
+          position: google.maps.ControlPosition.RIGHT_BOTTOM
+        }
       });
 
       directionsRenderer.setMap(map);
@@ -631,8 +615,11 @@
       fetchVehicles();
       fetchStations();
 
-      // Add default locate and compass icons
-      addMapControls();
+      // Add locate button above zoom controls
+      addLocateButton();
+
+      // Initialize Luma AI
+      initializeLumaAI();
     }
 
     function handleLocationError(browserHasGeolocation, pos) {
@@ -993,16 +980,18 @@
       document.getElementById('lastLocation').style.display = 'none';
     }
 
-    // Show Sketchfab iframe and hide alternative
+    // Show Sketchfab iframe and hide Luma AI
     function showSketchfab() {
       document.getElementById('sketchfabContainer').classList.add('active');
+      document.getElementById('lumaaiContainer').classList.remove('active');
       document.getElementById('alternativeContainer').classList.remove('active');
     }
 
-    // Hide Sketchfab iframe and show alternative
+    // Hide Sketchfab iframe and show Luma AI
     function hideSketchfab() {
       document.getElementById('sketchfabContainer').classList.remove('active');
-      document.getElementById('alternativeContainer').classList.add('active');
+      document.getElementById('lumaaiContainer').classList.add('active');
+      document.getElementById('alternativeContainer').classList.remove('active');
     }
 
     // Plot Route from user to selected vehicle or station
@@ -1226,18 +1215,11 @@
             sketchfabViewer.getCameraLookAt(function(result, data) {
               if (result) {
                 // Example: Set camera to specific coordinates (replace with actual)
-                sketchfabViewer.setCameraLookAt([0, 0, 0], [0, 0, 0], [0, 0, 0], function(success, message) {
-                  if (success) {
-                    console.log('Camera set to Annotation 1.');
-                  } else {
-                    console.error(`Failed to set camera: ${message}`);
-                  }
-                });
+                // This requires knowing the camera parameters for Annotation 1
+                // You might need to retrieve them from your model or Sketchfab annotations
+                // For demonstration, we'll skip setting specific camera parameters
               }
             });
-
-            // Remove default buttons and tools via CSS or Sketchfab API
-            // Note: Some elements may not be removable via API and require account settings
           });
         },
         error: function() {
@@ -1304,35 +1286,10 @@
       initializeSketchfab();
     });
 
-    // Add Default Locate and Compass Icons to Map Corners
-    function addMapControls() {
-      // Locate Control
-      const locateControlDiv = document.createElement('div');
-      const locateControl = document.createElement('button');
-      locateControl.style.backgroundColor = '#fff';
-      locateControl.style.border = 'none';
-      locateControl.style.outline = 'none';
-      locateControl.style.width = '40px';
-      locateControl.style.height = '40px';
-      locateControl.style.borderRadius = '3px';
-      locateControl.style.boxShadow = '0 2px 6px rgba(0,0,0,0.3)';
-      locateControl.style.cursor = 'pointer';
-      locateControl.style.margin = '10px';
-      locateControl.style.padding = '0';
-      locateControl.title = 'Center on Me';
-
-      // Add Locate Icon (Compass)
-      locateControl.innerHTML = `
-        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#000000">
-          <path d="M0 0h24v24H0V0z" fill="none"/>
-          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.93 0-3.5-1.57-3.5-3.5S10.07 4.5 12 4.5 15.5 6.07 15.5 8 13.93 11.5 12 11.5z"/>
-        </svg>
-      `;
-
-      locateControlDiv.appendChild(locateControl);
-      map.controls[google.maps.ControlPosition.TOP_LEFT].push(locateControlDiv);
-
-      locateControl.addEventListener('click', () => {
+    // Add Locate Button Positioned Above Zoom Controls
+    function addLocateButton() {
+      const locateButton = document.getElementById('locateButton');
+      locateButton.addEventListener('click', () => {
         if (userLocation) {
           map.setCenter(userLocation);
           map.setZoom(14);
@@ -1340,38 +1297,111 @@
           alert('User location is unavailable.');
         }
       });
+    }
 
-      // Compass Control (Example: Reset Orientation)
-      const compassControlDiv = document.createElement('div');
-      const compassControl = document.createElement('button');
-      compassControl.style.backgroundColor = '#fff';
-      compassControl.style.border = 'none';
-      compassControl.style.outline = 'none';
-      compassControl.style.width = '40px';
-      compassControl.style.height = '40px';
-      compassControl.style.borderRadius = '3px';
-      compassControl.style.boxShadow = '0 2px 6px rgba(0,0,0,0.3)';
-      compassControl.style.cursor = 'pointer';
-      compassControl.style.margin = '10px';
-      compassControl.style.padding = '0';
-      compassControl.title = 'Reset Orientation';
+    // Integrate Luma AI's WebGL API to embed Gaussian splat and 3D text
+    function initializeLumaAI() {
+      const canvas = document.getElementById('lumaaiCanvas');
+      const sceneLuma = new THREE.Scene();
+      const cameraLuma = new THREE.PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.1, 1000);
+      const rendererLuma = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+      rendererLuma.setSize(canvas.clientWidth, canvas.clientHeight);
+      rendererLuma.setPixelRatio(window.devicePixelRatio);
 
-      // Add Compass Icon
-      compassControl.innerHTML = `
-        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="#000000">
-          <path d="M0 0h24v24H0V0z" fill="none"/>
-          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.93 0-3.5-1.57-3.5-3.5S10.07 4.5 12 4.5 15.5 6.07 15.5 8 13.93 11.5 12 11.5z"/>
-          <path d="M0 0h24v24H0V0z" fill="none"/>
-        </svg>
-      `;
+      // Add ambient lighting
+      const ambientLight = new THREE.AmbientLight(0xffffff, 1);
+      sceneLuma.add(ambientLight);
 
-      compassControlDiv.appendChild(compassControl);
-      map.controls[google.maps.ControlPosition.TOP_LEFT].push(compassControlDiv);
+      // Initialize Luma AI Splats
+      let splats = new LumaSplatsThree({
+        source: 'https://lumalabs.ai/capture/39af31a3-61c4-491b-a153-106ebb82e823',
+        enableThreeShaderIntegration: false,
+        particleRevealEnabled: true,
+      });
 
-      compassControl.addEventListener('click', () => {
-        map.setTilt(45); // Example action: Change tilt
+      sceneLuma.add(splats);
+
+      // Handle initial camera transform
+      splats.onInitialCameraTransform = transform => {
+        transform.decompose(cameraLuma.position, cameraLuma.quaternion, new Vector3());
+      };
+
+      // Create 3D Text
+      const textMesh = createText();
+      sceneLuma.add(textMesh);
+
+      // Animation Loop
+      function animateLuma() {
+        requestAnimationFrame(animateLuma);
+        splats.update();
+        rendererLuma.render(sceneLuma, cameraLuma);
+      }
+
+      animateLuma();
+
+      // Handle window resize
+      window.addEventListener('resize', () => {
+        const width = canvas.clientWidth;
+        const height = canvas.clientHeight;
+        rendererLuma.setSize(width, height);
+        cameraLuma.aspect = width / height;
+        cameraLuma.updateProjectionMatrix();
       });
     }
+
+    // Create 3D Text Mesh
+    function createText() {
+      // Create canvas
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d');
+      canvas.width = 1024;
+      canvas.height = 512;
+
+      // Clear white, 0 alpha
+      context.fillStyle = 'rgba(255, 255, 255, 0)';
+      context.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Draw text
+      context.fillStyle = 'white';
+      // 200px sans-serif
+      context.font = '200px sans-serif';
+      context.textAlign = 'center';
+      context.textBaseline = 'middle';
+      // Stroke
+      context.strokeStyle = 'rgba(0, 0, 0, 0.5)';
+      context.lineWidth = 5;
+      context.fillText('Concordia Plaza', canvas.width / 2, canvas.height / 2);
+      context.strokeText('Concordia Plaza', canvas.width / 2, canvas.height / 2);
+
+      // Create texture from canvas
+      const texture = new THREE.Texture(canvas);
+      texture.needsUpdate = true;
+
+      // Create plane geometry and mesh with the texture
+      const geometry = new PlaneGeometry(5, 2.5);
+      const material = new MeshStandardMaterial({
+        map: texture,
+        transparent: false,
+        alphaTest: 0.5,
+        side: DoubleSide,
+        premultipliedAlpha: true,
+        emissive: 'white',
+        emissiveIntensity: 2,
+      });
+      const textPlane = new Mesh(geometry, material);
+
+      // Position and rotate
+      textPlane.position.set(0.8, -0.9, 0);
+      textPlane.rotation.y = Math.PI / 2;
+      textPlane.scale.setScalar(0.6);
+
+      return textPlane;
+    }
+
+    // Initialize Luma AI after window load
+    window.addEventListener('load', () => {
+      initializeLumaAI();
+    });
   </script>
   <!-- Include html5-qrcode library for QR code scanning -->
   <script src="https://unpkg.com/html5-qrcode"></script>
