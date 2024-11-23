@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>User Account</title>
+  <link rel="stylesheet" href="accountstyles.css">
+  <!-- Firebase Compatibility Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>User Account</h1>
+    <div class="account-info">
+      <p><strong>Full Name:</strong> <span id="user-name">Not Verified</span></p>
+      <p><strong>Email:</strong> <span id="user-email">Loading...</span></p>
+      <p><strong>Mobile Number:</strong> <span id="user-mobile">Not Verified</span></p>
+      <p><strong>Driver Verification:</strong> 
+        <span id="verification-status">Not Verified</span>
+        <button id="verify-button">Start Verification</button>
+      </p>
+    </div>
+  </div>
+
+  <script>
+    // Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyAj46uOcP-Y4T3X2ZpdlWt4_PxUWCTFwyM",
+      authDomain: "masstransitcompany.firebaseapp.com",
+      projectId: "masstransitcompany",
+      storageBucket: "masstransitcompany.appspot.com",
+      messagingSenderId: "1039705984668",
+      appId: "1:1039705984668:web:e85aafd14917825b3d6759",
+      measurementId: "G-NMMQLPBJD1"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
+    // Populate user details after login
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        document.getElementById('user-email').textContent = user.email || "N/A";
+        document.getElementById('user-name').textContent = user.displayName || "Not Verified";
+        document.getElementById('user-mobile').textContent = user.phoneNumber || "Not Verified";
+        
+        // Fetch verification status from your backend or SumSub webhook
+        // For demonstration, assuming verification is done
+        // Replace this logic with actual verification status
+        const isVerified = true; // Replace with actual status
+
+        if (isVerified) {
+          document.getElementById('verification-status').textContent = "Verified";
+          document.getElementById('verify-button').style.display = 'none';
+        } else {
+          document.getElementById('verification-status').textContent = "Not Verified";
+          document.getElementById('verify-button').style.display = 'inline-block';
+        }
+      } else {
+        // Redirect to login page if not logged in
+        window.location.href = "sign-in-verification.html";
+      }
+    });
+
+    // Redirect to SumSub verification flow
+    document.getElementById('verify-button').addEventListener('click', () => {
+      window.open("sign-in-verification.html", "_blank");
+    });
+  </script>
+</body>
+</html>
