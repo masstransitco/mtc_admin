@@ -8,9 +8,9 @@ const cors = Cors({
   origin: 'https://www.masstransit.company', // Frontend origin
 });
 
-const SUMSUB_SECRET_KEY = process.env.SUMSUB_SECRET_KEY; // Secret Key
-const SUMSUB_APP_TOKEN = process.env.SUMSUB_APP_TOKEN;   // App Token
-const SUMSUB_LEVEL_NAME = process.env.SUMSUB_LEVEL_NAME; // Level Name
+const SUMSUB_SECRET_KEY = sxxPyeZ66SatdaU8i8VkMSwUW0s6xbpr; // Secret Key
+const SUMSUB_APP_TOKEN = prd:IEvJRQx1bbM743wVO85Np6tV.6LMeKAxre9b9kF7lqk80QS0dyibtoVLp;   // App Token
+const SUMSUB_LEVEL_NAME = mtc; // Level Name
 
 const handler = async (req, res) => {
   console.log(`Request Method: ${req.method}`);
