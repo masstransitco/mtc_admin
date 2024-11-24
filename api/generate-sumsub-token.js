@@ -4,7 +4,7 @@ const Cors = require('micro-cors');
 
 // Initialize micro-cors with allowed origin and methods
 const cors = Cors({
-  allowMethods: ['GET', 'POST', 'OPTIONS'],
+  allowMethods: ['GET', 'POST', 'OPTIONS'], 
   origin: 'https://www.masstransit.company', // Frontend origin
 });
 
