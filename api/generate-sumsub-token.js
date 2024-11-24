@@ -1,5 +1,7 @@
 const crypto = require('crypto');
 const axios = require('axios');
+const Cors = require('micro-cors');
+
 
 // Environment variables
 const SUMSUB_SECRET_KEY = process.env.SUMSUB_SECRET_KEY; // Secret Key
