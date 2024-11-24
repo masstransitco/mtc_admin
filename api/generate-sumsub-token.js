@@ -4,7 +4,7 @@ const Cors = require('micro-cors');
 
 // Initialize micro-cors with allowed origin and methods
 const cors = Cors({
-  allowMethods: ['GET', 'POST', 'OPTIONS'], 
+  allowMethods: ['GET', 'POST', 'OPTIONS'],
   origin: 'https://www.masstransit.company', // Frontend origin
 });
 
@@ -66,7 +66,16 @@ const handler = async (req, res) => {
       data: payload,
     };
 
-    console.log('Making request to SumSub API with options:', options);
+    console.log('Making request to SumSub API with options:', {
+      method: options.method,
+      url: options.url,
+      headers: {
+        'Content-Type': options.headers['Content-Type'],
+        'X-App-Token': options.headers['X-App-Token'],
+        'X-App-Access-Signature': options.headers['X-App-Access-Signature'],
+      },
+      data: options.data,
+    });
 
     // Make the request to SumSub API
     const response = await axios(options);
