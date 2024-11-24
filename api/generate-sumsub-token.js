@@ -77,6 +77,10 @@ module.exports = async (req, res) => {
     } catch (error) {
         console.error('Error generating SumSub token:', error);
 
+        console.log('Payload:', JSON.stringify(payload));
+        console.log('Generated Signature:', signature);
+
+
         // Ensure CORS headers are still set in error responses
         res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
         res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
