@@ -10,7 +10,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
   <!-- SumSub SDK -->
   <script src="https://static.sumsub.com/idensic/static/sns-websdk-builder.js"></script>
-
+</head>
 <body>
   <div class="container">
     <h1>Sign-in & Verification</h1>
@@ -27,7 +27,7 @@
       apiKey: "AIzaSyAj46uOcP-Y4T3X2ZpdlWt4_PxUWCTFwyM",
       authDomain: "masstransitcompany.firebaseapp.com",
       projectId: "masstransitcompany",
-      storageBucket: "masstransitcompany.appspot.com", // Corrected storage bucket
+      storageBucket: "masstransitcompany.appspot.com",
       messagingSenderId: "1039705984668",
       appId: "1:1039705984668:web:e85aafd14917825b3d6759",
       measurementId: "G-NMMQLPBJD1"
@@ -118,17 +118,22 @@
       console.log('Starting SumSub verification for user:', userId);
 
       // Fetch access token from backend
-      fetch('https://www.masstransit.company/api/generate-sumsub-token', { // Replace with your actual backend URL
+      fetch('https://mtc-backend.vercel.app/api/generate-sumsub-token', { // Update URL if necessary
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({ userId })
       })
-      .then(response => response.json())
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        return response.json();
+      })
       .then(data => {
-        if (data.accessToken) {
-          initializeSumSubSDK(data.accessToken);
+        if (data.token) { // Expecting 'token' instead of 'accessToken'
+          initializeSumSubSDK(data.token);
         } else {
           throw new Error('Access token not received');
         }
