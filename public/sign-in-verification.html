@@ -8,8 +8,6 @@
   <!-- Firebase Compatibility Scripts -->
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
-  <!-- SumSub SDK -->
-  <script src="https://static.sumsub.com/idensic/static/sns-websdk-builder.js"></script>
 </head>
 <body>
   <div class="container">
@@ -21,8 +19,9 @@
     <div id="sumsub-websdk-container" style="margin-top: 20px;"></div>
   </div>
 
+  <script src="bundle.js"></script>
   <script>
-    // Firebase configuration
+    // Firebase initialization and event listeners can remain in this script
     const firebaseConfig = {
       apiKey: "AIzaSyAj46uOcP-Y4T3X2ZpdlWt4_PxUWCTFwyM",
       authDomain: "masstransitcompany.firebaseapp.com",
@@ -118,7 +117,7 @@
       console.log('Starting SumSub verification for user:', userId);
 
       // Fetch access token from backend
-      fetch('https://www.masstransit.company/api/generate-sumsub-token', { // Update URL if necessary
+      fetch('/api/generate-sumsub-token', { // Use relative path since backend is on the same domain
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -143,55 +142,6 @@
         alert('Failed to initiate verification. Please try again later.');
       });
     }
-
-    function initializeSumSubSDK(accessToken) {
-      if (typeof snsWebSdk === 'undefined') {
-        console.error('SumSub SDK is not loaded');
-        alert('Verification SDK failed to load. Please try again later.');
-        return;
-      }
-
-      const snsWebSdkInstance = snsWebSdk.init(
-        accessToken,
-        () => fetchNewAccessToken() // Token refresh callback
-      )
-      .withConf({ lang: 'en' })
-      .on('onError', error => {
-        console.error('Sumsub Error:', error);
-        alert('Verification encountered an error. Please try again.');
-      })
-      .onMessage((type, payload) => {
-        console.log('Sumsub Message:', type, payload);
-        if (type === 'onSdkExit') {
-          // Optional: Handle when user exits the SDK
-          alert('Verification exited. You can retry if needed.');
-        }
-        if (type === 'onVerificationCompleted') {
-          // Redirect to User Account Page
-          window.location.href = "user-account.html";
-        }
-      })
-      .build();
-
-      console.log('Launching SumSub SDK');
-      snsWebSdkInstance.launch('#sumsub-websdk-container');
-    }
-
-    function fetchNewAccessToken() {
-      // Implement token refresh logic if SumSub requires token refresh
-      // For demonstration, returning a resolved promise with the existing token
-      return Promise.resolve("prd:IEvJRQx1bbM743wVO85Np6tV.6LMeKAxre9b9kF7lqk80QS0dyibtoVLp");
-    }
-
-    // Listen for messages from SumSub (optional)
-    window.addEventListener('message', (event) => {
-      if (event.data.type === 'verificationCompleted') {
-        // Handle the verification completion (e.g., update UI, notify server)
-        console.log('Verification completed for user:', event.data.userId);
-        // Redirect or perform other actions as needed
-        window.location.href = "user-account.html";
-      }
-    });
   </script>
 </body>
 </html>
