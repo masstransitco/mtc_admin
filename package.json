@@ -12,9 +12,10 @@
   },
   "author": "",
   "license": "MIT"
-}
+
 
 "scripts": {
   "build": "webpack --mode production",
   "start": "webpack serve --mode development --open"
+},
 }
