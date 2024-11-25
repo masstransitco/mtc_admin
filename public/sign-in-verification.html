@@ -120,7 +120,7 @@
       console.log('Starting SumSub verification for user:', userId);
 
       // Fetch access token from backend
-      fetch('/api/generate-sumsub-token', { // Use relative path since backend is on the same domain
+      fetch('https://mtc-v2.vercel.app/api/generate-sumsub-token', { // Use relative path since backend is on the same domain
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
